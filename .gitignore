@@ -4,4 +4,5 @@ __pycache__/
 static/uploads/*
 !static/uploads/.gitkeep
 scan_history.json
+restaurant_history.json
 venv/
