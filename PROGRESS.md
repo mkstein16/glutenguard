@@ -67,6 +67,17 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 7. **Twitter @UseCelia rate limited** — locked for 24hrs, resolves Feb 6
 ---
 
+## TODO (Quick Tasks)
+
+Tasks that came up but aren't part of the main sprint:
+
+- [ ] Rebrand app/repo from GlutenGuard → Celia (code, templates, Render URL)
+- [ ] Purchase askcelia.com domain
+- [ ] Post first Twitter content (blocked until Feb 6 rate limit clears)
+- [ ] Post intro discussion in r/Celiac
+
+---
+
 ## Architecture Notes
 
 - **API Key:** Stored in .env file, hidden via .gitignore, added as environment variable on Render
@@ -193,5 +204,6 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 ### Day 1 - Feb 5, 2026
 - ✅ PostgreSQL database live with 3 tables
 - ✅ Created Twitter @UseCelia + Reddit u/glutenfreebuilder
-- ✅ Rebranded to Celia
+- ✅ Created social presence as "Celia" (@UseCelia, u/glutenfreebuilder)
+- 🔄 Full app rebrand to Celia is future TODO
 - 🔄 Tomorrow: Implement caching logic in restaurant-scout endpoint

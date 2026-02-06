@@ -1,0 +1,719 @@
+/* Research Summary */
+.research-summary {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+}
+
+.research-summary p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* Staff Knowledge Badge */
+.staff-knowledge {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.staff-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.staff-badge {
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.staff-badge.staff-high {
+    background: var(--safe-bg);
+    color: var(--safe);
+    border: 1px solid var(--safe-border);
+}
+
+.staff-badge.staff-medium {
+    background: var(--investigate-bg);
+    color: var(--investigate);
+    border: 1px solid var(--investigate-border);
+}
+
+.staff-badge.staff-low {
+    background: var(--unsafe-bg);
+    color: var(--unsafe);
+    border: 1px solid var(--unsafe-border);
+}
+
+.staff-badge.staff-unknown {
+    background: var(--neutral-bg);
+    color: var(--neutral);
+    border: 1px solid var(--neutral-border);
+}
+
+/* Cuisine Context */
+.cuisine-subheading {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    padding-left: 50px;
+}
+
+#cuisine-context-content ul {
+    padding: 0 16px 12px 50px;
+    list-style: none;
+}
+
+#cuisine-context-content li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 3px 0;
+    position: relative;
+}
+
+#cuisine-context-content li::before {
+    content: '\2022';
+    position: absolute;
+    left: -14px;
+    color: var(--text-muted);
+}
+
+#cuisine-positives-group {
+    margin-top: 8px;
+}
+
+/* Search Form */
+.search-form {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+
+.search-form label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+    color: var(--text);
+}
+
+.search-form input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 16px;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s;
+}
+
+.search-form input:focus {
+    outline: none;
+    border-color: var(--text-muted);
+}
+
+.search-form input::placeholder {
+    color: var(--text-muted);
+}
+
+.optional {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Score Card */
+#score-card,
+#final-score-card {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 16px;
+}
+
+.score-ring {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 800;
+    border: 4px solid;
+}
+
+.score-ring.high-risk {
+    border-color: var(--unsafe);
+    color: var(--unsafe);
+    background: var(--unsafe-bg);
+}
+
+.score-ring.moderate-risk {
+    border-color: var(--investigate);
+    color: var(--investigate);
+    background: var(--investigate-bg);
+}
+
+.score-ring.low-risk {
+    border-color: var(--safe);
+    color: var(--safe);
+    background: var(--safe-bg);
+}
+
+.score-ring.very-low-risk {
+    border-color: var(--safe);
+    color: var(--safe);
+    background: var(--safe-bg);
+}
+
+/* Safety Label Badge */
+.safety-label-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+
+.safety-label-badge.high-risk {
+    background: var(--unsafe-bg);
+    color: var(--unsafe);
+    border: 1px solid var(--unsafe-border);
+}
+
+.safety-label-badge.moderate-risk {
+    background: var(--investigate-bg);
+    color: var(--investigate);
+    border: 1px solid var(--investigate-border);
+}
+
+.safety-label-badge.low-risk {
+    background: var(--safe-bg);
+    color: var(--safe);
+    border: 1px solid var(--safe-border);
+}
+
+.safety-label-badge.very-low-risk {
+    background: var(--safe-bg);
+    color: var(--safe);
+    border: 1px solid var(--safe-border);
+}
+
+#scout-restaurant-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.cuisine-type {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+#scout-summary {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Menu Analysis */
+#menu-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.menu-list li {
+    padding: 6px 0;
+}
+
+.menu-list li strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.menu-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 1px;
+    line-height: 1.4;
+}
+
+/* Call Script Card */
+#call-script-card {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    border: 1px solid var(--border);
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+#call-script-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#call-script-context {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+#call-script-list {
+    padding-left: 20px;
+    margin: 0;
+}
+
+#call-script-list li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 6px 0;
+    line-height: 1.5;
+}
+
+/* Script Presets */
+.script-presets {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.preset-btn {
+    padding: 5px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.preset-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.preset-btn.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+}
+
+/* Script Checkboxes */
+.script-item {
+    list-style: none;
+    margin-left: -20px;
+    padding: 4px 0;
+}
+
+.script-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.script-check input[type="checkbox"] {
+    margin-top: 4px;
+    flex-shrink: 0;
+    accent-color: var(--safe);
+}
+
+.script-question {
+    flex: 1;
+}
+
+.priority-tag {
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.priority-tag.priority-essential {
+    background: var(--safe-bg);
+    color: var(--safe);
+    border: 1px solid var(--safe-border);
+}
+
+.priority-tag.priority-additional {
+    background: var(--neutral-bg);
+    color: var(--neutral);
+    border: 1px solid var(--neutral-border);
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 0;
+    margin-top: 4px;
+    text-decoration: underline;
+}
+
+.btn-link:hover {
+    color: var(--text-secondary);
+}
+
+.additional.script-hidden {
+    display: none;
+}
+
+/* Questionnaire */
+.questionnaire-header {
+    margin-bottom: 20px;
+}
+
+.questionnaire-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.questionnaire-intro {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.question-row {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+}
+
+.question-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.question-toggles {
+    display: flex;
+    gap: 8px;
+}
+
+.toggle-btn {
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex: 1;
+    text-align: center;
+}
+
+.toggle-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.toggle-btn.selected-yes {
+    background: var(--safe-bg);
+    border-color: var(--safe-border);
+    color: var(--safe);
+}
+
+.toggle-btn.selected-no {
+    background: var(--unsafe-bg);
+    border-color: var(--unsafe-border);
+    color: var(--unsafe);
+}
+
+.toggle-btn.selected-unsure {
+    background: var(--investigate-bg);
+    border-color: var(--investigate-border);
+    color: var(--investigate);
+}
+
+/* Recommendation Badge */
+#recommendation-badge {
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    margin: 8px 0;
+}
+
+#recommendation-badge.go {
+    background: var(--safe-bg);
+    color: var(--safe);
+    border: 2px solid var(--safe-border);
+}
+
+#recommendation-badge.no-go {
+    background: var(--unsafe-bg);
+    color: var(--unsafe);
+    border: 2px solid var(--unsafe-border);
+}
+
+#recommendation-badge.caution {
+    background: var(--investigate-bg);
+    color: var(--investigate);
+    border: 2px solid var(--investigate-border);
+}
+
+#recommendation-detail {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-top: 8px;
+}
+
+/* Score Change Indicator */
+#score-change-indicator {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#score-change-indicator.positive {
+    color: var(--safe);
+}
+
+#score-change-indicator.negative {
+    color: var(--unsafe);
+}
+
+#score-change-indicator.neutral {
+    color: var(--text-muted);
+}
+
+/* Final Summary Card */
+#final-summary-card {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-top: 8px;
+}
+
+#final-summary {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* Saved Restaurants */
+.saved-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.saved-item:hover {
+    background: var(--bg-secondary);
+}
+
+.saved-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+
+.saved-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.saved-name {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.saved-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.saved-score {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Share */
+.share-container {
+    position: relative;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.share-feedback {
+    display: block;
+    text-align: center;
+    color: var(--safe);
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 6px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Find Alternatives Button */
+.btn-alt {
+    background: var(--bg);
+    color: var(--text-secondary);
+    border: 1px dashed var(--border);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.btn-alt:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-muted);
+}
+
+.btn-alt:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Alternative Cards */
+#alternatives-section {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+#alternatives-results h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.alternative-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+}
+
+.alt-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.alt-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.alt-cuisine {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.alt-reason {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    line-height: 1.4;
+}
+
+.alt-scout-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+/* Small Spinner */
+.small-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 12px auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#alternatives-loading {
+    text-align: center;
+    padding: 12px 0;
+}
+
+/* Save confirmation */
+#save-restaurant-btn.saved {
+    background: var(--safe);
+    cursor: default;
+}

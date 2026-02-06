@@ -444,6 +444,13 @@ def restaurant_scout_analyze():
     menu_url = data.get("menu_url", "").strip()
     location = data.get("location", "").strip()
 
+    # Check cache first (only if no custom menu_url provided)
+    if not menu_url:
+        cached = get_cached_restaurant(restaurant_name, location)
+        if cached:
+            print(f"[SCOUT] Returning cached result for: {restaurant_name}")
+            return jsonify(cached)
+
     url_context = ""
     url_search_instruction = ""
     if menu_url:
@@ -518,6 +525,10 @@ def restaurant_scout_analyze():
         "timestamp": datetime.now().isoformat(),
         "analysis": analysis,
     }
+
+    # Cache the result (only if no custom menu_url)
+    if not menu_url:
+        cache_restaurant_result(restaurant_name, location, result)
 
     return jsonify(result)
 
@@ -638,7 +649,7 @@ def restaurant_scout_saved():
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-from database import init_tables
+from database import init_tables, get_cached_restaurant, cache_restaurant_result
 init_tables()
 
 if __name__ == "__main__":

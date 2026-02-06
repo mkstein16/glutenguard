@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>GlutenGuard - Restaurant Scout</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/restaurant_scout.css') }}">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <a href="/" class="icon-btn" aria-label="Back to home">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </a>
+            <div class="header-content">
+                <h1>Restaurant Scout</h1>
+                <p class="tagline">Research before you dine</p>
+            </div>
+            <button id="saved-toggle" class="icon-btn" aria-label="Saved restaurants">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+            </button>
+        </header>
+
+        <main>
+            <!-- Section 1: Search -->
+            <div id="search-view">
+                <div class="search-form">
+                    <label for="restaurant-name">Restaurant Name</label>
+                    <input type="text" id="restaurant-name" placeholder="e.g. Olive Garden, Chipotle..." autocomplete="off">
+
+                    <label for="menu-url">Menu URL <span class="optional">(optional)</span></label>
+                    <input type="url" id="menu-url" placeholder="Paste a menu or website link..." autocomplete="off">
+
+                    <label for="scout-location">Location <span class="optional">(city or neighborhood)</span></label>
+                    <input type="text" id="scout-location" placeholder="e.g. Downtown Portland, Brooklyn NY..." autocomplete="off">
+
+                    <button id="scout-btn" class="btn btn-primary btn-full">Scout This Restaurant</button>
+                </div>
+            </div>
+
+            <!-- Section 2: Loading -->
+            <div id="scout-loading" class="hidden">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Researching restaurant...</p>
+                <p class="loading-hint">Searching menus, reviews, and celiac community data</p>
+            </div>
+
+            <!-- Section 3: Results -->
+            <div id="scout-results" class="hidden">
+                <!-- Score Card -->
+                <div id="score-card">
+                    <div id="safety-score-ring" class="score-ring"></div>
+                    <div id="safety-label" class="safety-label-badge"></div>
+                    <h2 id="scout-restaurant-name"></h2>
+                    <p id="scout-cuisine" class="cuisine-type"></p>
+                    <p id="scout-summary"></p>
+                </div>
+
+                <!-- Research Summary -->
+                <div id="research-summary-card" class="research-summary">
+                    <p id="research-summary"></p>
+                </div>
+
+                <!-- Community Sentiment -->
+                <details class="detail-group neutral" id="community-sentiment-section" open>
+                    <summary>
+                        <span class="detail-icon">i</span>
+                        Community Reviews
+                    </summary>
+                    <p id="community-sentiment"></p>
+                </details>
+
+                <!-- This Restaurant: Specific Findings -->
+                <details class="detail-group safe" id="specific-positives-section">
+                    <summary>
+                        <span class="detail-icon">&#10003;</span>
+                        This Restaurant: Positives
+                        <span class="detail-count" id="specific-positives-count"></span>
+                    </summary>
+                    <ul id="specific-positives-list"></ul>
+                </details>
+
+                <details class="detail-group danger" id="specific-risks-section">
+                    <summary>
+                        <span class="detail-icon">!</span>
+                        This Restaurant: Risks
+                        <span class="detail-count" id="specific-risks-count"></span>
+                    </summary>
+                    <ul id="specific-risks-list"></ul>
+                </details>
+
+                <!-- Staff Knowledge -->
+                <div id="staff-knowledge-card" class="staff-knowledge">
+                    <span class="staff-label">Staff Knowledge:</span>
+                    <span id="staff-knowledge-badge" class="staff-badge"></span>
+                </div>
+
+                <!-- Menu Analysis -->
+                <div id="menu-accordion">
+                    <details class="detail-group safe" id="likely-safe-section">
+                        <summary>
+                            <span class="detail-icon">&#10003;</span>
+                            Likely Safe
+                            <span class="detail-count" id="safe-count"></span>
+                        </summary>
+                        <ul id="likely-safe-list" class="menu-list"></ul>
+                    </details>
+
+                    <details class="detail-group warning" id="ask-first-section">
+                        <summary>
+                            <span class="detail-icon">?</span>
+                            Ask First
+                            <span class="detail-count" id="ask-count"></span>
+                        </summary>
+                        <ul id="ask-first-list" class="menu-list"></ul>
+                    </details>
+
+                    <details class="detail-group danger" id="red-flags-section">
+                        <summary>
+                            <span class="detail-icon">!</span>
+                            Red Flags
+                            <span class="detail-count" id="flags-count"></span>
+                        </summary>
+                        <ul id="red-flags-list" class="menu-list"></ul>
+                    </details>
+                </div>
+
+                <!-- Cuisine Context -->
+                <details class="detail-group neutral" id="cuisine-context-section">
+                    <summary>
+                        <span class="detail-icon">i</span>
+                        General Cuisine Context
+                    </summary>
+                    <div id="cuisine-context-content">
+                        <div id="cuisine-risks-group">
+                            <h4 class="cuisine-subheading">Common Risks</h4>
+                            <ul id="cuisine-general-risks"></ul>
+                        </div>
+                        <div id="cuisine-positives-group">
+                            <h4 class="cuisine-subheading">Common Positives</h4>
+                            <ul id="cuisine-general-positives"></ul>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Call Script -->
+                <div id="call-script-card">
+                    <h3>Questions to Ask When You Call</h3>
+                    <p id="call-script-context"></p>
+                    <div id="script-presets" class="script-presets">
+                        <button class="preset-btn active" data-preset="quick">Quick</button>
+                        <button class="preset-btn" data-preset="thorough">Thorough</button>
+                    </div>
+                    <ol id="call-script-list"></ol>
+                    <button id="show-additional-toggle" class="btn-link hidden">Show All Questions</button>
+                </div>
+
+                <div class="share-container">
+                    <button id="share-results-btn" class="btn btn-secondary btn-full">Share Report</button>
+                    <span id="share-results-feedback" class="share-feedback hidden">Copied to clipboard!</span>
+                </div>
+
+                <button id="find-alternatives-btn" class="btn btn-alt btn-full hidden">Find Better Options Nearby</button>
+
+                <!-- Alternatives -->
+                <div id="alternatives-section" class="hidden">
+                    <div id="alternatives-loading" class="hidden">
+                        <div class="small-spinner"></div>
+                        <p class="loading-hint">Finding safer alternatives nearby...</p>
+                    </div>
+                    <div id="alternatives-results" class="hidden">
+                        <h3>Better Options Nearby</h3>
+                        <div id="alternatives-list"></div>
+                    </div>
+                </div>
+
+                <button id="start-questionnaire-btn" class="btn btn-primary btn-full">I Called &mdash; Answer Follow-up Questions</button>
+                <button id="new-scout-btn" class="btn btn-secondary btn-full">Scout Another Restaurant</button>
+            </div>
+
+            <!-- Section 4: Questionnaire -->
+            <div id="questionnaire-view" class="hidden">
+                <div class="questionnaire-header">
+                    <h2>Post-Call Check</h2>
+                    <p class="questionnaire-intro">Answer based on your phone call with the restaurant:</p>
+                </div>
+                <div id="questionnaire-questions"></div>
+                <button id="submit-questionnaire-btn" class="btn btn-primary btn-full">Get Final Assessment</button>
+                <button id="back-to-results-btn" class="btn btn-secondary btn-full">Back to Results</button>
+            </div>
+
+            <!-- Section 5: Questionnaire Loading -->
+            <div id="questionnaire-loading" class="hidden">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Calculating final assessment...</p>
+                <p class="loading-hint">Adjusting safety score based on your call</p>
+            </div>
+
+            <!-- Section 6: Final Report -->
+            <div id="final-report-view" class="hidden">
+                <div id="final-score-card">
+                    <div id="final-score-ring" class="score-ring"></div>
+                    <div id="final-label" class="safety-label-badge"></div>
+                    <div id="score-change-indicator"></div>
+                    <div id="recommendation-badge"></div>
+                    <p id="recommendation-detail"></p>
+                </div>
+
+                <details class="detail-group neutral" open>
+                    <summary>
+                        <span class="detail-icon">i</span>
+                        Score Reasoning
+                    </summary>
+                    <p id="score-reasoning"></p>
+                </details>
+
+                <details class="detail-group safe" open>
+                    <summary>
+                        <span class="detail-icon">&#10003;</span>
+                        Safe to Order
+                        <span class="detail-count" id="safe-order-count"></span>
+                    </summary>
+                    <ul id="safe-to-order-list"></ul>
+                </details>
+
+                <details class="detail-group danger" open>
+                    <summary>
+                        <span class="detail-icon">!</span>
+                        Items to Avoid
+                        <span class="detail-count" id="avoid-count"></span>
+                    </summary>
+                    <ul id="items-to-avoid-list"></ul>
+                </details>
+
+                <details class="detail-group neutral">
+                    <summary>
+                        <span class="detail-icon">i</span>
+                        Dining Tips
+                        <span class="detail-count" id="tips-count"></span>
+                    </summary>
+                    <ul id="dining-tips-list"></ul>
+                </details>
+
+                <div id="final-summary-card">
+                    <p id="final-summary"></p>
+                </div>
+
+                <div class="share-container">
+                    <button id="share-final-btn" class="btn btn-secondary btn-full">Share Final Report</button>
+                    <span id="share-final-feedback" class="share-feedback hidden">Copied to clipboard!</span>
+                </div>
+
+                <button id="save-restaurant-btn" class="btn btn-primary btn-full">Save to My Safe Restaurants</button>
+                <button id="new-scout-final-btn" class="btn btn-secondary btn-full">Scout Another Restaurant</button>
+            </div>
+        </main>
+
+        <!-- Saved Restaurants Overlay -->
+        <aside id="saved-view" class="hidden">
+            <div class="history-header">
+                <h2>Saved Restaurants</h2>
+                <button id="saved-close" class="icon-btn" aria-label="Close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="saved-list"></div>
+            <div id="saved-empty" class="hidden">
+                <p>No saved restaurants yet. Scout a restaurant and save it!</p>
+            </div>
+        </aside>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/restaurant_scout.js') }}"></script>
+</body>
+</html>
