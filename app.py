@@ -301,8 +301,26 @@ def get_media_type(filename):
 
 def parse_claude_json(response_text):
     text = response_text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1].rsplit("```", 1)[0]
+    # Remove markdown code fences if present
+    if "```" in text:
+        # Find content between code fences
+        parts = text.split("```")
+        for part in parts:
+            # Skip the language identifier line (e.g., "json\n")
+            if part.strip().startswith("json"):
+                part = part.strip()[4:].strip()
+            elif part.strip().startswith("{"):
+                pass
+            else:
+                continue
+            if "{" in part:
+                text = part
+                break
+    # Extract just the JSON object: from first { to last }
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        text = text[start:end + 1]
     return json.loads(text)
 
 
@@ -323,6 +341,11 @@ def scan_page():
 @app.route("/restaurant-scout")
 def restaurant_scout_page():
     return render_template("restaurant_scout.html")
+
+
+@app.route("/discover")
+def discover_page():
+    return render_template("discover.html")
 
 
 # ---------------------------------------------------------------------------
@@ -644,12 +667,110 @@ def restaurant_scout_saved():
 
 
 # ---------------------------------------------------------------------------
+# Discovery API
+# ---------------------------------------------------------------------------
+
+DISCOVER_PROMPT = """You are a celiac disease restaurant researcher. Find gluten-free-friendly {cuisine} restaurants in {location}.
+
+## MANDATORY RESEARCH
+
+You MUST perform these web searches:
+
+1. Search: "{cuisine} celiac safe {location}"
+2. Search: "{cuisine} gluten free {location}"
+3. Search: "site:findmeglutenfree.com {cuisine} {location}"
+
+## RESPONSE FORMAT
+
+Based on your research, return ONLY valid JSON with up to 5 restaurants you actually found:
+{{
+  "restaurants": [
+    {{
+      "name": "Exact restaurant name from search results",
+      "address": "Address if found, or neighborhood/area",
+      "cuisine_type": "{cuisine}",
+      "brief_safety_note": "1-2 sentences about why this appeared in GF searches (e.g., 'Listed on Find Me Gluten Free with 4.5 stars. Multiple reviewers mention dedicated GF menu.')",
+      "source": "Where you found it (e.g., 'Find Me Gluten Free', 'Yelp GF reviews', 'Google')"
+    }}
+  ]
+}}
+
+## RULES
+- Only include restaurants you actually found in your search results. Do NOT make up restaurants.
+- Prefer restaurants with good celiac/GF reviews or listings on Find Me Gluten Free.
+- Return 1-5 restaurants. If you found none, return an empty array.
+- brief_safety_note should explain WHY this restaurant appears to be GF-friendly based on what you found.
+
+Return ONLY valid JSON, no other text."""
+
+
+@app.route("/api/discover", methods=["POST"])
+def discover_restaurants():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    cuisine = data.get("cuisine", "").strip()
+    location = data.get("location", "").strip()
+
+    if not cuisine or not location:
+        return jsonify({"error": "Cuisine and location are required"}), 400
+
+    prompt = DISCOVER_PROMPT.format(cuisine=cuisine, location=location)
+
+    try:
+        print(f"[DISCOVER] Searching for {cuisine} restaurants in {location}")
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2000,
+            tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        response_text = None
+        for block in reversed(message.content):
+            if block.type == "text":
+                response_text = block.text
+                break
+
+        if not response_text:
+            print(f"[DISCOVER] ERROR: No text block found in response")
+            return jsonify({"restaurants": []}), 200
+
+        print(f"[DISCOVER] Raw response (first 500 chars): {response_text[:500]}")
+        result = parse_claude_json(response_text)
+        restaurants = result.get("restaurants", [])
+        print(f"[DISCOVER] Found {len(restaurants)} restaurants")
+
+        # Check cache for any existing scores
+        if restaurants:
+            names = [r["name"] for r in restaurants]
+            cached_scores = get_cached_scores(names, location)
+
+            # Attach cached scores where available
+            for r in restaurants:
+                norm_name = " ".join(r["name"].lower().split())
+                if norm_name in cached_scores:
+                    r["cached_score"] = cached_scores[norm_name]
+
+        return jsonify({"restaurants": restaurants})
+
+    except json.JSONDecodeError as e:
+        print(f"[DISCOVER] JSON parse error: {e}")
+        return jsonify({"restaurants": []}), 200
+    except Exception as e:
+        print(f"[DISCOVER] Exception: {e}")
+        print(f"[DISCOVER] Traceback:\n{traceback.format_exc()}")
+        return jsonify({"restaurants": []}), 200
+
+
+# ---------------------------------------------------------------------------
 # Startup
 # ---------------------------------------------------------------------------
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-from database import init_tables, get_cached_restaurant, cache_restaurant_result
+from database import init_tables, get_cached_restaurant, cache_restaurant_result, get_cached_scores
 init_tables()
 
 if __name__ == "__main__":

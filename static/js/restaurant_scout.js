@@ -796,3 +796,27 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+// ---------------------------------------------------------------------------
+// URL Parameter Handling (for links from Discover page)
+// ---------------------------------------------------------------------------
+
+(function handleUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get("name");
+  const location = params.get("location");
+
+  if (name) {
+    restaurantNameInput.value = name;
+    if (location) {
+      locationInput.value = location;
+    }
+    // Clear URL params without triggering reload
+    window.history.replaceState({}, "", window.location.pathname);
+
+    // Auto-trigger search if both name and location provided
+    if (name && location) {
+      scoutBtn.click();
+    }
+  }
+})();

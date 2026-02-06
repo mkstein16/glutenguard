@@ -144,3 +144,34 @@ def cache_restaurant_result(name, location, result_json):
         return False
     finally:
         conn.close()
+
+
+def get_cached_scores(names, location):
+    """Look up cached safety scores for multiple restaurant names.
+    Returns a dict mapping normalized names to safety scores."""
+    conn = get_connection()
+    if conn is None:
+        return {}
+
+    norm_location = normalize_location(location)
+    norm_names = [normalize_name(n) for n in names]
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT LOWER(name) as norm_name, safety_score
+                FROM restaurants
+                WHERE LOWER(location) = %s AND LOWER(name) = ANY(%s)
+                """,
+                (norm_location, norm_names),
+            )
+            rows = cur.fetchall()
+
+        return {row["norm_name"]: row["safety_score"] for row in rows}
+
+    except Exception as e:
+        print(f"[CACHE] Error reading bulk cache: {e}")
+        return {}
+    finally:
+        conn.close()

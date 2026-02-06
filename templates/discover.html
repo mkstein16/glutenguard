@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>GlutenGuard - Discover</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/restaurant_scout.css') }}">
+    <style>
+        .cuisine-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-family: inherit;
+            margin-bottom: 16px;
+            color: var(--text);
+            background: var(--bg);
+            cursor: pointer;
+        }
+
+        .cuisine-select:focus {
+            outline: none;
+            border-color: var(--text-muted);
+        }
+
+        .discover-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .discover-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .discover-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .discover-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .discover-address {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .discover-cached-score {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            border: 3px solid;
+            flex-shrink: 0;
+        }
+
+        .discover-safety-note {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .discover-source {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .discover-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .discover-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        #discover-results {
+            margin-top: 16px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--text-muted);
+        }
+
+        .no-results p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <a href="/" class="icon-btn" aria-label="Back to home">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </a>
+            <div class="header-content">
+                <h1>Discover</h1>
+                <p class="tagline">Find celiac-friendly restaurants</p>
+            </div>
+            <div style="width: 40px;"></div>
+        </header>
+
+        <main>
+            <!-- Search Form -->
+            <div id="search-view">
+                <div class="search-form">
+                    <label for="cuisine-select">Cuisine Type</label>
+                    <select id="cuisine-select" class="cuisine-select">
+                        <option value="">Select a cuisine...</option>
+                        <option value="Thai">Thai</option>
+                        <option value="Mexican">Mexican</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Indian">Indian</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Vietnamese">Vietnamese</option>
+                        <option value="Mediterranean">Mediterranean</option>
+                        <option value="American">American</option>
+                        <option value="Korean">Korean</option>
+                        <option value="Greek">Greek</option>
+                        <option value="French">French</option>
+                        <option value="Peruvian">Peruvian</option>
+                        <option value="Ethiopian">Ethiopian</option>
+                        <option value="Middle Eastern">Middle Eastern</option>
+                    </select>
+
+                    <label for="discover-location">Location</label>
+                    <input type="text" id="discover-location" placeholder="e.g. Philadelphia, Brooklyn NY..." autocomplete="off">
+
+                    <button id="discover-btn" class="btn btn-primary btn-full">Find Restaurants</button>
+                </div>
+
+                <div id="discover-results" class="hidden"></div>
+            </div>
+
+            <!-- Loading -->
+            <div id="discover-loading" class="hidden">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Searching for restaurants...</p>
+                <p class="loading-hint">Checking Find Me Gluten Free, Yelp, and more</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const $ = (sel) => document.querySelector(sel);
+        const show = (el) => el.classList.remove("hidden");
+        const hide = (el) => el.classList.add("hidden");
+
+        const cuisineSelect = $("#cuisine-select");
+        const locationInput = $("#discover-location");
+        const discoverBtn = $("#discover-btn");
+        const searchView = $("#search-view");
+        const loading = $("#discover-loading");
+        const resultsContainer = $("#discover-results");
+
+        discoverBtn.addEventListener("click", async () => {
+            const cuisine = cuisineSelect.value;
+            const location = locationInput.value.trim();
+
+            if (!cuisine) {
+                cuisineSelect.focus();
+                return;
+            }
+            if (!location) {
+                locationInput.focus();
+                return;
+            }
+
+            hide(resultsContainer);
+            show(loading);
+
+            try {
+                const response = await fetch("/api/discover", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ cuisine, location }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Discovery failed");
+                }
+
+                displayResults(data.restaurants, location);
+            } catch (err) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <p>Something went wrong. Please try again.</p>
+                    </div>
+                `;
+                show(resultsContainer);
+            } finally {
+                hide(loading);
+            }
+        });
+
+        locationInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                discoverBtn.click();
+            }
+        });
+
+        function displayResults(restaurants, location) {
+            if (!restaurants || restaurants.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <p>No gluten-free-friendly restaurants found for this search.</p>
+                        <p>Try a different cuisine or location.</p>
+                    </div>
+                `;
+                show(resultsContainer);
+                return;
+            }
+
+            let html = "";
+            restaurants.forEach((r) => {
+                const scoreHtml = r.cached_score !== undefined
+                    ? `<div class="discover-cached-score ${getScoreClass(r.cached_score)}">${r.cached_score}</div>`
+                    : "";
+
+                const encodedName = encodeURIComponent(r.name);
+                const encodedLocation = encodeURIComponent(location);
+                const scoutUrl = `/restaurant-scout?name=${encodedName}&location=${encodedLocation}`;
+
+                html += `
+                    <div class="discover-card">
+                        <div class="discover-card-header">
+                            <div class="discover-card-info">
+                                <div class="discover-name">${escapeHtml(r.name)}</div>
+                                <div class="discover-address">${escapeHtml(r.address || r.cuisine_type)}</div>
+                            </div>
+                            ${scoreHtml}
+                        </div>
+                        <div class="discover-safety-note">${escapeHtml(r.brief_safety_note)}</div>
+                        <div class="discover-source">Found on: ${escapeHtml(r.source)}</div>
+                        <div class="discover-actions">
+                            <a href="${scoutUrl}" class="btn btn-primary">Get Full Report</a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsContainer.innerHTML = html;
+            show(resultsContainer);
+        }
+
+        function getScoreClass(score) {
+            if (score >= 8) return "very-low-risk";
+            if (score >= 6) return "low-risk";
+            if (score >= 4) return "moderate-risk";
+            return "high-risk";
+        }
+
+        function escapeHtml(str) {
+            if (!str) return "";
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

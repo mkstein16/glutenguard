@@ -1,8 +1,8 @@
 # GlutenGuard - Project Status
 
-**Last Updated:** February 5, 2026
+**Last Updated:** February 6, 2026
 **Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/
-**Tech Stack:** Flask (Python) | HTML/CSS/JS (mobile-first) | Anthropic Claude API (Sonnet, vision + web search) | JSON file storage (no database yet)
+**Tech Stack:** Flask (Python) | HTML/CSS/JS (mobile-first) | Anthropic Claude API (Sonnet, vision + web search) | PostgreSQL on Render | JSON file storage (scan history only)
 
 ---
 
@@ -37,34 +37,48 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 - Post-call questionnaire (7 yes/no/unsure questions)
 - Final safety report with GO / NO-GO / PROCEED WITH CAUTION
 - Share report button (native share on mobile, clipboard on desktop)
+- **Caching:** Results saved to PostgreSQL, 30-day expiration. Second search for same restaurant is instant and free.
 
-### 3. Smart Alternatives ❌ (disabled)
+### 3. Discovery Mode ✅ (NEW - basic)
+- Search by cuisine type + location (e.g. "Thai" + "Philadelphia")
+- Claude searches web for GF-friendly restaurants of that type in that area
+- Returns list of ~5 restaurants with name, address, brief safety note, source
+- Shows cached safety scores for any previously searched restaurants
+- "Get Full Report" button auto-triggers the full scout (which caches the result)
+- Currently a lightweight FMGF proxy — becomes more valuable as database grows with cached scores
+
+### 4. Smart Alternatives ❌ (disabled)
 - Built but disabled due to API rate limits (30k tokens/min)
 - When restaurant scores <7, searches for 3 nearby alternatives
 - "Find Better Options Nearby" button (user-triggered, not automatic)
-- Blocked until caching is implemented
+- Can likely re-enable now that caching is implemented — needs testing
 
-### 4. Hub/Navigation ✅
-- Homepage with two feature cards: Label Scanner + Restaurant Scout
+### 5. Hub/Navigation ✅
+- Homepage with three feature cards: Label Scanner + Restaurant Scout + Discover
 - Back navigation between features
 - Consistent mobile-first styling
 
-### 5. Database Infrastructure ✅ (NEW)
+### 6. Database Infrastructure ✅
 - PostgreSQL on Render (free tier)
 - Tables: restaurants (caching), users (accounts), saved_restaurants (junction)
 - schema.sql for version control + setup_db.py for initialization
 - External URL for local dev, Internal URL for production
+- Restaurant caching: normalized name+location key, 30-day TTL, ON CONFLICT upsert
+- Bulk cache lookup for discovery mode (get_cached_scores)
+
 ---
 
 ## Known Issues & Bugs
 
-1. **Rate limits:** Main restaurant scout uses ~25k-28k tokens (web search results are huge). Alternatives push over 30k limit. Must implement caching before re-enabling.
-2. **No database persistence:** JSON files wipe when Render free tier restarts. Scan history and restaurant searches don't persist.
+1. **Rate limits:** Main restaurant scout uses ~25k-28k tokens (web search results are huge). Alternatives push over 30k limit. Caching helps but first searches are still expensive.
+2. **Scan history not persistent:** JSON files wipe when Render free tier restarts. Restaurant searches now persist via PostgreSQL.
 3. **Restaurant analysis sometimes too generic:** Kalaya (dedicated GF restaurant) scored ~6 instead of 9+. Claude sometimes gives cuisine-generic advice instead of restaurant-specific intel.
 4. **Menu items sometimes fabricated:** Claude occasionally makes up menu items not on the actual restaurant's menu.
-5. **API costs high:** ~$0.25-0.40 per restaurant search. Needs optimization via caching and token reduction.
+5. **API costs high:** ~$0.25-0.40 per first restaurant search. Cached = $0.00. Discovery mode adds ~$0.10-0.15 per search.
 6. **No user accounts:** No way to save restaurants across sessions or devices.
-7. **Twitter @UseCelia rate limited** — locked for 24hrs, resolves Feb 6
+7. **First search is slow (~40 seconds):** Claude does 4 web searches per restaurant. Needs loading animation to manage perception. Cached searches are instant.
+8. **Discovery mode is basic:** Currently mostly proxies FMGF results. Becomes more valuable as database fills with cached safety scores.
+
 ---
 
 ## TODO (Quick Tasks)
@@ -73,30 +87,35 @@ Tasks that came up but aren't part of the main sprint:
 
 - [ ] Rebrand app/repo from GlutenGuard → Celia (code, templates, Render URL)
 - [ ] Purchase askcelia.com domain
-- [ ] Post first Twitter content (blocked until Feb 6 rate limit clears)
+- [ ] Post first Twitter content (blocked until rate limit clears)
 - [ ] Post intro discussion in r/Celiac
+- [ ] Add step-by-step loading animation for restaurant scout (timed progress messages during search)
+- [ ] Test re-enabling Smart Alternatives now that caching is live
 
 ---
 
 ## Architecture Notes
 
 - **API Key:** Stored in .env file, hidden via .gitignore, added as environment variable on Render
-- **Models:** Using claude-sonnet-4-20250514 for both scout and alternatives
+- **Models:** Using claude-sonnet-4-20250514 for scout, alternatives, and discovery
 - **Endpoints:**
-  - `/` — Hub page
+  - `/` — Hub page (3 feature cards)
   - `/scanner` — Label scanner
   - `/restaurant-scout` — Restaurant scout search + results
-  - `/api/restaurant-scout` — POST, main restaurant analysis
+  - `/discover` — Discovery mode (cuisine + location search)
+  - `/api/restaurant-scout` — POST, main restaurant analysis (with caching)
   - `/api/restaurant-scout/alternatives` — POST, find alternatives (currently disabled)
-- **max_tokens:** Main scout = 10,000 (reduced from 16,000). Alternatives = 2,000 (reduced from 4,000).
+  - `/api/discover` — POST, discover restaurants by cuisine + location
+- **max_tokens:** Main scout = 10,000. Alternatives = 2,000. Discovery = 2,000.
 - **Frontend:** Plain HTML/CSS/JS, no framework. Templates in `/templates/`. Mobile-first responsive.
+- **Caching:** PostgreSQL, keyed on normalized name+location, 30-day TTL, upsert on conflict
 
 ---
 
 ## Key Design Decisions Made
 
 1. **Confidence tool, not research tool** — Features should help users feel confident and look helpful, not just provide information
-2. **Search-first for MVP** — Users search specific restaurants, discovery mode coming next
+2. **Search-first for MVP** — Users search specific restaurants, discovery mode is lightweight layer on top
 3. **Manual calling over AI calling** — Users make calls themselves with generated scripts. AI calling is a future premium feature.
 4. **FMGF as one data point** — Not fully reliable unless restaurant is dedicated GF. Reviews treated as context, not truth.
 5. **Location as text input** — User types city/neighborhood rather than browser geolocation (works for researching ahead of time)
@@ -104,13 +123,16 @@ Tasks that came up but aren't part of the main sprint:
 7. **Build in public** — Daily content on X/Twitter + Reddit for marketing and accountability
 8. **Rebranded to Celia** — character positioning as "your confident friend who always knows the safe spots." Celia voice on Twitter, developer voice on Reddit.
 9. **Domain:** askcelia.com available (not purchased yet)
+10. **Discovery = lightweight first** — Returns list with brief notes + "Get Full Report" button, rather than full analysis of multiple restaurants at once. Cheaper, faster, funnels into cached scout.
+11. **Launch city-first (likely Philly)** — Pre-populate local restaurants instead of chains. Celiacs need help with local spots more than chains that publish allergen guides. Expand city by city.
+
 ---
 
 ## Girlfriend's Feedback (Key User Insights)
 
 - Call script questions are decent but she knows what she wants to ask; 8 questions is too many for a restaurant to answer
 - Wants: If restaurant isn't safe, recommend nearby similar alternatives. "Could we go to this one instead?" is easier than "we can't go there"
-- Wants: "I want Indian food, where can I get it?" → show options ranked by safety
+- Wants: "I want Indian food, where can I get it?" → show options ranked by safety ← **Discovery mode addresses this**
 - Wants: For to-go orders, ability to call and verify it's GF before ordering
 - She's more knowledgeable than average celiac; the app needs to serve people who are less confident about what to ask
 
@@ -119,16 +141,16 @@ Tasks that came up but aren't part of the main sprint:
 ## Immediate Roadmap (4-Week Sprint starting Feb 5)
 
 ### Week 1: Foundation (Feb 5-11)
-- Day 1 (Feb 5): PostgreSQL setup on Render, create tables
-- Day 2 (Feb 6): Implement caching (save search results to DB)
-- Day 3 (Feb 7): Discovery mode backend (/api/discover)
-- Day 4 (Feb 8): Discovery mode frontend UI
-- Day 5 (Feb 9): User accounts (simple email) + save restaurants
-- Day 6 (Feb 10): "My Safe Spots" page
-- Day 7 (Feb 11): Quick share functionality + deploy
+- ~~PostgreSQL setup on Render, create tables~~ ✅
+- ~~Implement caching (save search results to DB)~~ ✅
+- ~~Discovery mode backend + frontend~~ ✅
+- User accounts (simple email) + save restaurants
+- "My Safe Spots" page
+- Quick share functionality + deploy
 
 ### Week 2: Pre-Population + User Testing (Feb 12-18)
-- Pre-populate 50 chain restaurants (~$15 API cost)
+- Pre-populate 50 restaurants (Philly local restaurants across cuisines, not just chains)
+- Add loading animation for first-time searches
 - Improve search quality and ranking
 - Onboarding flow
 - Share with 5-10 celiac beta testers
@@ -167,14 +189,13 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 
 ## Future Features (Backlog)
 
-- **Discovery mode:** "Show me safe Thai restaurants in Philly" → ranked list
-- **Smart alternatives** (re-enable after caching)
+- **Smart alternatives** (re-enable after testing with caching)
 - **Travel meal planner:** Pre-trip research, translation cards, airport/airline database
 - **AI phone calling:** Premium feature for pre-order verification
 - **Group dining mode:** "Suggest a Restaurant" text generator for group chats
 - **Date mode:** Romantic, celiac-safe restaurant finder
 - **Symptom tracker:** Log meals + symptoms, AI identifies triggers (future app, medical compliance concerns)
-- **Pre-populate top 500 chains** across major cities
+- **Streaming responses:** Stream Claude's response so results appear progressively instead of all at once (reduces perceived wait time)
 
 ---
 
@@ -189,21 +210,34 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 
 ## Daily Workflow
 
-1. Check in with Claude.ai chat: "Day X starting"
-2. Code for 1.5-2 hours (use Claude Code for implementation)
-3. Post content (30 min)
-4. End of day check-in: what was built, issues, metrics
+1. Start new Claude.ai chat with PROGRESS.md attached
+2. Code for 1.5-2 hours (use Claude Code for implementation, Claude.ai for strategy)
+3. Post content when ready (not tied to coding days)
+4. Update PROGRESS.md at end of session
+5. Commit + push to GitHub → Render auto-deploys
 
 **Use Claude.ai for:** Strategic decisions, content creation, plan adjustments, debugging approach
 **Use Claude Code for:** Actually writing and running code
+**Test locally first** (`python app.py` → localhost:5000) before pushing to Render
 
 ---
 
 ## Session Log
 
-### Day 1 - Feb 5, 2026
+### Feb 5
 - ✅ PostgreSQL database live with 3 tables
 - ✅ Created Twitter @UseCelia + Reddit u/glutenfreebuilder
 - ✅ Created social presence as "Celia" (@UseCelia, u/glutenfreebuilder)
 - 🔄 Full app rebrand to Celia is future TODO
-- 🔄 Tomorrow: Implement caching logic in restaurant-scout endpoint
+
+### Feb 6
+- ✅ Restaurant caching implemented (database.py + app.py)
+- ✅ Fixed JSON parsing for restaurant scout (Claude wraps JSON in markdown fences)
+- ✅ Tested caching locally — second search is instant
+- ✅ Discovery mode built: backend endpoint, frontend UI, hub card
+- ✅ Auto-search on "Get Full Report" from discovery
+- ✅ 3 Reddit comments in r/Celiac (morning)
+- 🔄 Twitter @UseCelia still rate limited — post caching economics tweet when cleared
+- 💡 Decision: Launch city-first (Philly) instead of chains — local restaurants are where celiacs need the most help
+- 💡 Discovery mode is basic now but improves as database grows with cached scores
+- 📋 Next: User accounts + save restaurants
