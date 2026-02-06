@@ -49,6 +49,11 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 - Back navigation between features
 - Consistent mobile-first styling
 
+### 5. Database Infrastructure ✅ (NEW)
+- PostgreSQL on Render (free tier)
+- Tables: restaurants (caching), users (accounts), saved_restaurants (junction)
+- schema.sql for version control + setup_db.py for initialization
+- External URL for local dev, Internal URL for production
 ---
 
 ## Known Issues & Bugs
@@ -59,7 +64,7 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 4. **Menu items sometimes fabricated:** Claude occasionally makes up menu items not on the actual restaurant's menu.
 5. **API costs high:** ~$0.25-0.40 per restaurant search. Needs optimization via caching and token reduction.
 6. **No user accounts:** No way to save restaurants across sessions or devices.
-
+7. **Twitter @UseCelia rate limited** — locked for 24hrs, resolves Feb 6
 ---
 
 ## Architecture Notes
@@ -86,7 +91,8 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 5. **Location as text input** — User types city/neighborhood rather than browser geolocation (works for researching ahead of time)
 6. **Alternatives user-triggered** — Button click, not automatic (to manage API costs and rate limits)
 7. **Build in public** — Daily content on X/Twitter + Reddit for marketing and accountability
-
+8. **Rebranded to Celia** — character positioning as "your confident friend who always knows the safe spots." Celia voice on Twitter, developer voice on Reddit.
+9. **Domain:** askcelia.com available (not purchased yet)
 ---
 
 ## Girlfriend's Feedback (Key User Insights)
@@ -135,6 +141,10 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 
 **Post 1x/day on X/Twitter, 2-3x/week on Reddit**
 
+**Accounts:**
+- Twitter/X: @UseCelia
+- Reddit: u/glutenfreebuilder (active in r/Celiac, r/glutenfree, r/CeliacLifestyle)
+
 Content pillars:
 1. **Building Journey** (3x/week) — Process, struggles, wins
 2. **Celiac Education** (2x/week) — Helpful, shareable content
@@ -175,3 +185,13 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 
 **Use Claude.ai for:** Strategic decisions, content creation, plan adjustments, debugging approach
 **Use Claude Code for:** Actually writing and running code
+
+---
+
+## Session Log
+
+### Day 1 - Feb 5, 2026
+- ✅ PostgreSQL database live with 3 tables
+- ✅ Created Twitter @UseCelia + Reddit u/glutenfreebuilder
+- ✅ Rebranded to Celia
+- 🔄 Tomorrow: Implement caching logic in restaurant-scout endpoint
