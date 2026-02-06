@@ -22,11 +22,11 @@
                 <h1>Restaurant Scout</h1>
                 <p class="tagline">Research before you dine</p>
             </div>
-            <button id="saved-toggle" class="icon-btn" aria-label="Saved restaurants">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                </svg>
-            </button>
+            <div class="header-nav">
+                {% if user %}
+                <a href="/my-safe-spots" class="nav-link">My Safe Spots</a>
+                {% endif %}
+            </div>
         </header>
 
         <main>
@@ -55,13 +55,42 @@
 
             <!-- Section 3: Results -->
             <div id="scout-results" class="hidden">
-                <!-- Score Card -->
+                <!-- Score Card with Save Button -->
                 <div id="score-card">
                     <div id="safety-score-ring" class="score-ring"></div>
                     <div id="safety-label" class="safety-label-badge"></div>
                     <h2 id="scout-restaurant-name"></h2>
                     <p id="scout-cuisine" class="cuisine-type"></p>
                     <p id="scout-summary"></p>
+
+                    <!-- Action Buttons: Save & Share -->
+                    <div id="score-card-actions" class="score-card-actions">
+                        {% if user %}
+                        <button id="save-restaurant-btn" class="btn btn-save">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            Save to My Safe Spots
+                        </button>
+                        {% else %}
+                        <a href="/signin" class="btn btn-save-signin">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            Sign In to Save
+                        </a>
+                        {% endif %}
+                        <button id="share-report-btn" class="btn btn-share">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                            Share Report
+                        </button>
+                    </div>
+                    <div id="action-feedback-container" class="action-feedback-container">
+                        <span id="save-feedback" class="action-feedback hidden"></span>
+                        <span id="share-feedback" class="action-feedback hidden"></span>
+                    </div>
                 </div>
 
                 <!-- Research Summary -->
@@ -263,21 +292,6 @@
             </div>
         </main>
 
-        <!-- Saved Restaurants Overlay -->
-        <aside id="saved-view" class="hidden">
-            <div class="history-header">
-                <h2>Saved Restaurants</h2>
-                <button id="saved-close" class="icon-btn" aria-label="Close">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-            <div id="saved-list"></div>
-            <div id="saved-empty" class="hidden">
-                <p>No saved restaurants yet. Scout a restaurant and save it!</p>
-            </div>
-        </aside>
     </div>
 
     <script src="{{ url_for('static', filename='js/restaurant_scout.js') }}"></script>

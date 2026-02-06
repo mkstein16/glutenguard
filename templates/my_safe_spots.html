@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>GlutenGuard - My Safe Spots</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .page-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .saved-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .saved-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .saved-score {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            border: 4px solid;
+            flex-shrink: 0;
+        }
+
+        .saved-score.high-risk {
+            border-color: var(--unsafe);
+            color: var(--unsafe);
+            background: var(--unsafe-bg);
+        }
+
+        .saved-score.moderate-risk {
+            border-color: var(--investigate);
+            color: var(--investigate);
+            background: var(--investigate-bg);
+        }
+
+        .saved-score.low-risk,
+        .saved-score.very-low-risk {
+            border-color: var(--safe);
+            color: var(--safe);
+            background: var(--safe-bg);
+        }
+
+        .saved-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .saved-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .saved-location {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .saved-label {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .saved-label.high-risk {
+            background: var(--unsafe-bg);
+            color: var(--unsafe);
+        }
+
+        .saved-label.moderate-risk {
+            background: var(--investigate-bg);
+            color: var(--investigate);
+        }
+
+        .saved-label.low-risk,
+        .saved-label.very-low-risk {
+            background: var(--safe-bg);
+            color: var(--safe);
+        }
+
+        .saved-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .saved-card-actions .btn {
+            flex: 1;
+            padding: 10px 16px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .btn-remove {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: var(--bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-remove:hover {
+            background: var(--unsafe-bg);
+            color: var(--unsafe);
+            border-color: var(--unsafe);
+        }
+
+        .btn-remove:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .user-email {
+            color: var(--text-secondary);
+        }
+
+        .user-nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .user-nav a:hover {
+            color: var(--text);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <a href="/" class="icon-btn" aria-label="Back to home">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </a>
+            <div class="header-content">
+                <h1>My Safe Spots</h1>
+                <p class="tagline">Your saved restaurants</p>
+            </div>
+            <div class="user-nav">
+                <span class="user-email">{{ user.email }}</span>
+                <a href="/signout">Sign out</a>
+            </div>
+        </header>
+
+        <main class="page-container">
+            <div id="saved-restaurants-list">
+                {% for r in saved_restaurants %}
+                <div class="saved-card" data-restaurant-id="{{ r.id }}">
+                    <div class="saved-card-header">
+                        <div class="saved-score {{ 'very-low-risk' if r.safety_score >= 8 else 'low-risk' if r.safety_score >= 6 else 'moderate-risk' if r.safety_score >= 4 else 'high-risk' }}">
+                            {{ r.safety_score }}
+                        </div>
+                        <div class="saved-info">
+                            <div class="saved-name">{{ r.name }}</div>
+                            <div class="saved-location">{{ r.location }}</div>
+                            <span class="saved-label {{ 'very-low-risk' if r.safety_score >= 8 else 'low-risk' if r.safety_score >= 6 else 'moderate-risk' if r.safety_score >= 4 else 'high-risk' }}">
+                                {{ 'Very Low Risk' if r.safety_score >= 8 else 'Low Risk' if r.safety_score >= 6 else 'Moderate Risk' if r.safety_score >= 4 else 'High Risk' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="saved-card-actions">
+                        <a href="/restaurant-scout?name={{ r.name | urlencode }}&location={{ r.location | urlencode }}" class="btn btn-primary">View Report</a>
+                        <button class="btn btn-remove" onclick="removeRestaurant({{ r.id }}, this)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div id="empty-state" class="empty-state {% if saved_restaurants %}hidden{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <h3>No saved restaurants yet</h3>
+                <p>Search for restaurants and click "Save to My Safe Spots" to add them here.</p>
+                <a href="/restaurant-scout" class="btn btn-primary">Find a Restaurant</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function removeRestaurant(restaurantId, buttonEl) {
+            if (!confirm('Remove this restaurant from your Safe Spots?')) {
+                return;
+            }
+
+            buttonEl.disabled = true;
+            buttonEl.innerHTML = 'Removing...';
+
+            try {
+                const response = await fetch('/api/unsave-restaurant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ restaurant_id: restaurantId }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Remove the card from the DOM
+                    const card = buttonEl.closest('.saved-card');
+                    card.style.transition = 'opacity 0.2s, transform 0.2s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(-20px)';
+
+                    setTimeout(() => {
+                        card.remove();
+
+                        // Check if list is now empty
+                        const list = document.getElementById('saved-restaurants-list');
+                        if (list.children.length === 0) {
+                            document.getElementById('empty-state').classList.remove('hidden');
+                        }
+                    }, 200);
+                } else {
+                    throw new Error(data.error || 'Failed to remove');
+                }
+            } catch (e) {
+                alert(e.message || 'Failed to remove. Please try again.');
+                buttonEl.disabled = false;
+                buttonEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove';
+            }
+        }
+    </script>
+</body>
+</html>

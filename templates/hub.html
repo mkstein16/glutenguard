@@ -105,6 +105,42 @@
             color: var(--text-muted);
             flex-shrink: 0;
         }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .user-email {
+            color: var(--text-secondary);
+        }
+
+        .user-nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .user-nav a:hover {
+            color: var(--text);
+            text-decoration: underline;
+        }
+
+        .user-nav .safe-spots-link {
+            background: var(--safe-bg);
+            color: var(--safe);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .user-nav .safe-spots-link:hover {
+            background: var(--safe);
+            color: white;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -113,6 +149,15 @@
             <div class="header-content">
                 <h1>GlutenGuard</h1>
                 <p class="tagline">Your celiac safety toolkit</p>
+            </div>
+            <div class="user-nav">
+                {% if user %}
+                    <a href="/my-safe-spots" class="safe-spots-link">My Safe Spots</a>
+                    <span class="user-email">{{ user.email }}</span>
+                    <a href="/signout">Sign out</a>
+                {% else %}
+                    <a href="/signin">Sign in</a>
+                {% endif %}
             </div>
         </header>
 

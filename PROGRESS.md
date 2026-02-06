@@ -1,6 +1,6 @@
 # GlutenGuard - Project Status
 
-**Last Updated:** February 6, 2026
+**Last Updated:** February 6, 2026 (evening)
 **Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/
 **Tech Stack:** Flask (Python) | HTML/CSS/JS (mobile-first) | Anthropic Claude API (Sonnet, vision + web search) | PostgreSQL on Render | JSON file storage (scan history only)
 
@@ -58,7 +58,15 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 - Back navigation between features
 - Consistent mobile-first styling
 
-### 6. Database Infrastructure ✅
+### 6. User Accounts & Saved Restaurants ✅
+- Simple email-based sign-in (no password yet, Flask sessions)
+- Save/unsave restaurants from scout results
+- "My Safe Spots" page showing all saved restaurants with clickable cards
+- Share restaurant reports via native mobile share or clipboard copy
+- Shared links use cached results for instant loading
+- Save state persists across sessions (PostgreSQL)
+
+### 7. Database Infrastructure ✅
 - PostgreSQL on Render (free tier)
 - Tables: restaurants (caching), users (accounts), saved_restaurants (junction)
 - schema.sql for version control + setup_db.py for initialization
@@ -75,9 +83,8 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 3. **Restaurant analysis sometimes too generic:** Kalaya (dedicated GF restaurant) scored ~6 instead of 9+. Claude sometimes gives cuisine-generic advice instead of restaurant-specific intel.
 4. **Menu items sometimes fabricated:** Claude occasionally makes up menu items not on the actual restaurant's menu.
 5. **API costs high:** ~$0.25-0.40 per first restaurant search. Cached = $0.00. Discovery mode adds ~$0.10-0.15 per search.
-6. **No user accounts:** No way to save restaurants across sessions or devices.
-7. **First search is slow (~40 seconds):** Claude does 4 web searches per restaurant. Needs loading animation to manage perception. Cached searches are instant.
-8. **Discovery mode is basic:** Currently mostly proxies FMGF results. Becomes more valuable as database fills with cached safety scores.
+6. **First search is slow (~40 seconds):** Claude does 4 web searches per restaurant. Needs loading animation to manage perception. Cached searches are instant.
+7. **Discovery mode is basic:** Currently mostly proxies FMGF results. Becomes more valuable as database fills with cached safety scores.
 
 ---
 
@@ -85,6 +92,7 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 
 Tasks that came up but aren't part of the main sprint:
 
+- [ ] Deploy latest code to Render (user accounts, share, save features)
 - [ ] Rebrand app/repo from GlutenGuard → Celia (code, templates, Render URL)
 - [ ] Purchase askcelia.com domain
 - [ ] Post first Twitter content (blocked until rate limit clears)
@@ -100,12 +108,18 @@ Tasks that came up but aren't part of the main sprint:
 - **Models:** Using claude-sonnet-4-20250514 for scout, alternatives, and discovery
 - **Endpoints:**
   - `/` — Hub page (3 feature cards)
-  - `/scanner` — Label scanner
+  - `/scan` — Label scanner
   - `/restaurant-scout` — Restaurant scout search + results
   - `/discover` — Discovery mode (cuisine + location search)
+  - `/signin` — Email sign-in page
+  - `/signout` — Sign out (redirects to hub)
+  - `/my-safe-spots` — User's saved restaurants page
   - `/api/restaurant-scout` — POST, main restaurant analysis (with caching)
   - `/api/restaurant-scout/alternatives` — POST, find alternatives (currently disabled)
   - `/api/discover` — POST, discover restaurants by cuisine + location
+  - `/api/save-restaurant` — POST, save restaurant to user's safe spots
+  - `/api/unsave-restaurant` — POST, remove restaurant from safe spots
+  - `/api/check-saved` — POST, check if restaurant is saved by user
 - **max_tokens:** Main scout = 10,000. Alternatives = 2,000. Discovery = 2,000.
 - **Frontend:** Plain HTML/CSS/JS, no framework. Templates in `/templates/`. Mobile-first responsive.
 - **Caching:** PostgreSQL, keyed on normalized name+location, 30-day TTL, upsert on conflict
@@ -144,9 +158,10 @@ Tasks that came up but aren't part of the main sprint:
 - ~~PostgreSQL setup on Render, create tables~~ ✅
 - ~~Implement caching (save search results to DB)~~ ✅
 - ~~Discovery mode backend + frontend~~ ✅
-- User accounts (simple email) + save restaurants
-- "My Safe Spots" page
-- Quick share functionality + deploy
+- ~~User accounts (simple email) + save restaurants~~ ✅
+- ~~"My Safe Spots" page~~ ✅
+- ~~Quick share functionality~~ ✅
+- Deploy to Render (next step)
 
 ### Week 2: Pre-Population + User Testing (Feb 12-18)
 - Pre-populate 50 restaurants (Philly local restaurants across cuisines, not just chains)
@@ -240,4 +255,19 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 - 🔄 Twitter @UseCelia still rate limited — post caching economics tweet when cleared
 - 💡 Decision: Launch city-first (Philly) instead of chains — local restaurants are where celiacs need the most help
 - 💡 Discovery mode is basic now but improves as database grows with cached scores
-- 📋 Next: User accounts + save restaurants
+
+### Feb 6 (continued - afternoon/evening)
+- ✅ Simple user accounts implemented (email-only, Flask sessions)
+- ✅ "Save Restaurant" button added to scout results (prominent green button in score card)
+- ✅ "My Safe Spots" page created - dedicated page showing all saved restaurants
+- ✅ Save/unsave functionality - users can remove restaurants from safe spots
+- ✅ Better save feedback - button shows "Saved to Safe Spots ✓" with clear state changes
+- ✅ Share functionality implemented:
+  - Native share sheet on mobile
+  - Clipboard copy on desktop
+  - Shareable URLs use original search terms for cache hits
+  - Recipients get instant cached results
+- ✅ Fixed cache lookup for shared links (was using Claude's formatted name, now uses original search term)
+- ✅ Added logging for cache hits/misses in backend
+- 📋 Week 1 core features complete! Ready for deployment.
+- 📋 Next: Deploy to Render, then start Week 2 (pre-populate restaurants + user testing)

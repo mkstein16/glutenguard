@@ -60,14 +60,16 @@ def normalize_location(location):
 
 
 def get_cached_restaurant(name, location):
-    """Look up a cached restaurant result. Returns the full result dict if found
-    and not expired (< 30 days old), otherwise None."""
+    """Look up a cached restaurant result. Returns a dict with 'restaurant_id' (database ID)
+    and 'data' (the analysis JSON) if found and not expired (< 30 days old), otherwise None."""
     conn = get_connection()
     if conn is None:
+        print("[CACHE] No database connection")
         return None
 
     norm_name = normalize_name(name)
     norm_location = normalize_location(location)
+    print(f"[CACHE] Looking up: norm_name='{norm_name}', norm_location='{norm_location}'")
     cache_ttl = timedelta(days=30)
 
     try:
@@ -97,7 +99,7 @@ def get_cached_restaurant(name, location):
             return None
 
         print(f"[CACHE] Hit for {name} ({location})")
-        return row["analysis_json"]
+        return {"restaurant_id": row["id"], "data": row["analysis_json"]}
 
     except Exception as e:
         print(f"[CACHE] Error reading cache: {e}")
@@ -173,5 +175,198 @@ def get_cached_scores(names, location):
     except Exception as e:
         print(f"[CACHE] Error reading bulk cache: {e}")
         return {}
+    finally:
+        conn.close()
+
+
+def get_or_create_user(email):
+    """Get existing user by email or create a new one. Returns user dict with id and email."""
+    conn = get_connection()
+    if conn is None:
+        return None
+
+    email = email.lower().strip()
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                # Try to find existing user
+                cur.execute("SELECT id, email FROM users WHERE email = %s", (email,))
+                row = cur.fetchone()
+
+                if row:
+                    return dict(row)
+
+                # Create new user
+                cur.execute(
+                    "INSERT INTO users (email) VALUES (%s) RETURNING id, email",
+                    (email,),
+                )
+                row = cur.fetchone()
+                return dict(row)
+
+    except Exception as e:
+        print(f"[USER] Error getting/creating user: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def get_user_by_id(user_id):
+    """Get user by ID. Returns user dict or None."""
+    conn = get_connection()
+    if conn is None:
+        return None
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, email FROM users WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+    except Exception as e:
+        print(f"[USER] Error getting user: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def get_restaurant_id(name, location):
+    """Get restaurant ID by name and location. Returns ID or None."""
+    conn = get_connection()
+    if conn is None:
+        return None
+
+    norm_name = normalize_name(name)
+    norm_location = normalize_location(location)
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM restaurants WHERE LOWER(name) = %s AND LOWER(location) = %s",
+                (norm_name, norm_location),
+            )
+            row = cur.fetchone()
+            return row["id"] if row else None
+
+    except Exception as e:
+        print(f"[DB] Error getting restaurant ID: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def restaurant_exists(restaurant_id):
+    """Check if a restaurant exists by ID. Returns True if exists."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM restaurants WHERE id = %s", (restaurant_id,))
+            return cur.fetchone() is not None
+
+    except Exception as e:
+        print(f"[DB] Error checking restaurant exists: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def save_user_restaurant(user_id, restaurant_id):
+    """Save a restaurant to user's saved list. Returns True if successful."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO saved_restaurants (user_id, restaurant_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT (user_id, restaurant_id) DO NOTHING
+                    """,
+                    (user_id, restaurant_id),
+                )
+        return True
+
+    except Exception as e:
+        print(f"[DB] Error saving restaurant: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def is_restaurant_saved(user_id, restaurant_id):
+    """Check if a restaurant is already saved by user."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM saved_restaurants WHERE user_id = %s AND restaurant_id = %s",
+                (user_id, restaurant_id),
+            )
+            return cur.fetchone() is not None
+
+    except Exception as e:
+        print(f"[DB] Error checking saved restaurant: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def unsave_user_restaurant(user_id, restaurant_id):
+    """Remove a restaurant from user's saved list. Returns True if successful."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM saved_restaurants WHERE user_id = %s AND restaurant_id = %s",
+                    (user_id, restaurant_id),
+                )
+        return True
+
+    except Exception as e:
+        print(f"[DB] Error unsaving restaurant: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def get_user_saved_restaurants(user_id):
+    """Get all saved restaurants for a user. Returns list of restaurant dicts."""
+    conn = get_connection()
+    if conn is None:
+        return []
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT r.id, r.name, r.location, r.safety_score, r.analysis_json,
+                       sr.saved_at
+                FROM saved_restaurants sr
+                JOIN restaurants r ON sr.restaurant_id = r.id
+                WHERE sr.user_id = %s
+                ORDER BY sr.saved_at DESC
+                """,
+                (user_id,),
+            )
+            rows = cur.fetchall()
+            return [dict(row) for row in rows]
+
+    except Exception as e:
+        print(f"[DB] Error getting saved restaurants: {e}")
+        return []
     finally:
         conn.close()

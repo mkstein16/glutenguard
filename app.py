@@ -5,7 +5,7 @@ import base64
 import traceback
 from datetime import datetime
 
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
@@ -16,6 +16,7 @@ app.config["UPLOAD_FOLDER"] = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "static", "uploads"
 )
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB max
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
 
 HISTORY_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "scan_history.json"
@@ -330,7 +331,10 @@ def parse_claude_json(response_text):
 
 @app.route("/")
 def hub():
-    return render_template("hub.html")
+    user = None
+    if "user_id" in session:
+        user = get_user_by_id(session["user_id"])
+    return render_template("hub.html", user=user)
 
 
 @app.route("/scan")
@@ -340,12 +344,43 @@ def scan_page():
 
 @app.route("/restaurant-scout")
 def restaurant_scout_page():
-    return render_template("restaurant_scout.html")
+    user = None
+    if "user_id" in session:
+        user = get_user_by_id(session["user_id"])
+    return render_template("restaurant_scout.html", user=user)
 
 
 @app.route("/discover")
 def discover_page():
     return render_template("discover.html")
+
+
+@app.route("/signin", methods=["GET", "POST"])
+def signin():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        if email:
+            user = get_or_create_user(email)
+            if user:
+                session["user_id"] = user["id"]
+                return redirect(url_for("hub"))
+        return render_template("signin.html", error="Please enter a valid email")
+    return render_template("signin.html")
+
+
+@app.route("/signout")
+def signout():
+    session.pop("user_id", None)
+    return redirect(url_for("hub"))
+
+
+@app.route("/my-safe-spots")
+def my_safe_spots():
+    if "user_id" not in session:
+        return redirect(url_for("signin"))
+    user = get_user_by_id(session["user_id"])
+    saved = get_user_saved_restaurants(session["user_id"])
+    return render_template("my_safe_spots.html", user=user, saved_restaurants=saved)
 
 
 # ---------------------------------------------------------------------------
@@ -469,10 +504,16 @@ def restaurant_scout_analyze():
 
     # Check cache first (only if no custom menu_url provided)
     if not menu_url:
+        print(f"[SCOUT] Checking cache for: name='{restaurant_name}', location='{location}'")
         cached = get_cached_restaurant(restaurant_name, location)
         if cached:
-            print(f"[SCOUT] Returning cached result for: {restaurant_name}")
-            return jsonify(cached)
+            print(f"[SCOUT] CACHE HIT - Returning cached result for: {restaurant_name}")
+            # Include the database restaurant_id in the response
+            result = cached["data"]
+            result["restaurant_id"] = cached["restaurant_id"]
+            return jsonify(result)
+        else:
+            print(f"[SCOUT] CACHE MISS - Will perform web search for: {restaurant_name}")
 
     url_context = ""
     url_search_instruction = ""
@@ -549,9 +590,13 @@ def restaurant_scout_analyze():
         "analysis": analysis,
     }
 
-    # Cache the result (only if no custom menu_url)
+    # Cache the result (only if no custom menu_url) and get the database ID
     if not menu_url:
         cache_restaurant_result(restaurant_name, location, result)
+        # Get the restaurant_id from the database after caching
+        restaurant_id = get_restaurant_id(restaurant_name, location)
+        if restaurant_id:
+            result["restaurant_id"] = restaurant_id
 
     return jsonify(result)
 
@@ -666,6 +711,102 @@ def restaurant_scout_saved():
     return jsonify(history)
 
 
+@app.route("/api/save-restaurant", methods=["POST"])
+def api_save_restaurant():
+    if "user_id" not in session:
+        return jsonify({"error": "Not signed in"}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    # Accept restaurant_id directly, or fall back to name/location lookup
+    restaurant_id = data.get("restaurant_id")
+
+    if not restaurant_id:
+        name = data.get("name", "").strip()
+        location = data.get("location", "").strip()
+
+        if not name or not location:
+            return jsonify({"error": "Either restaurant_id or name+location required"}), 400
+
+        restaurant_id = get_restaurant_id(name, location)
+        if not restaurant_id:
+            return jsonify({"error": "Restaurant not found in database"}), 404
+
+    # Verify the restaurant exists in database
+    if not restaurant_exists(restaurant_id):
+        return jsonify({"error": "Restaurant not found in database"}), 404
+
+    user_id = session["user_id"]
+
+    if is_restaurant_saved(user_id, restaurant_id):
+        return jsonify({"success": True, "already_saved": True})
+
+    if save_user_restaurant(user_id, restaurant_id):
+        return jsonify({"success": True, "already_saved": False})
+    else:
+        return jsonify({"error": "Failed to save restaurant"}), 500
+
+
+@app.route("/api/unsave-restaurant", methods=["POST"])
+def api_unsave_restaurant():
+    if "user_id" not in session:
+        return jsonify({"error": "Not signed in"}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    # Accept restaurant_id directly, or fall back to name/location lookup
+    restaurant_id = data.get("restaurant_id")
+
+    if not restaurant_id:
+        name = data.get("name", "").strip()
+        location = data.get("location", "").strip()
+
+        if not name or not location:
+            return jsonify({"error": "Either restaurant_id or name+location required"}), 400
+
+        restaurant_id = get_restaurant_id(name, location)
+        if not restaurant_id:
+            return jsonify({"error": "Restaurant not found in database"}), 404
+
+    user_id = session["user_id"]
+
+    if unsave_user_restaurant(user_id, restaurant_id):
+        return jsonify({"success": True})
+    else:
+        return jsonify({"error": "Failed to unsave restaurant"}), 500
+
+
+@app.route("/api/check-saved", methods=["POST"])
+def api_check_saved():
+    if "user_id" not in session:
+        return jsonify({"signed_in": False, "saved": False})
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"signed_in": True, "saved": False})
+
+    # Accept restaurant_id directly, or fall back to name/location lookup
+    restaurant_id = data.get("restaurant_id")
+
+    if not restaurant_id:
+        name = data.get("name", "").strip()
+        location = data.get("location", "").strip()
+
+        if not name or not location:
+            return jsonify({"signed_in": True, "saved": False})
+
+        restaurant_id = get_restaurant_id(name, location)
+        if not restaurant_id:
+            return jsonify({"signed_in": True, "saved": False})
+
+    saved = is_restaurant_saved(session["user_id"], restaurant_id)
+    return jsonify({"signed_in": True, "saved": saved})
+
+
 # ---------------------------------------------------------------------------
 # Discovery API
 # ---------------------------------------------------------------------------
@@ -770,7 +911,11 @@ def discover_restaurants():
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-from database import init_tables, get_cached_restaurant, cache_restaurant_result, get_cached_scores
+from database import (
+    init_tables, get_cached_restaurant, cache_restaurant_result, get_cached_scores,
+    get_or_create_user, get_user_by_id, get_restaurant_id, restaurant_exists,
+    save_user_restaurant, unsave_user_restaurant, is_restaurant_saved, get_user_saved_restaurants
+)
 init_tables()
 
 if __name__ == "__main__":

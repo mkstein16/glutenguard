@@ -12,12 +12,6 @@ const scoutResults = $("#scout-results");
 const questionnaireView = $("#questionnaire-view");
 const questionnaireLoading = $("#questionnaire-loading");
 const finalReportView = $("#final-report-view");
-const savedToggle = $("#saved-toggle");
-const savedView = $("#saved-view");
-const savedClose = $("#saved-close");
-const savedList = $("#saved-list");
-const savedEmpty = $("#saved-empty");
-
 const locationInput = $("#scout-location");
 
 // State
@@ -163,6 +157,9 @@ function displayScoutResults(data) {
   } else {
     hide(findAltBtn);
   }
+
+  // Check if restaurant is already saved and update button
+  checkSavedStatus();
 
   show(scoutResults);
 }
@@ -527,75 +524,6 @@ $("#save-restaurant-btn").addEventListener("click", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Saved Restaurants Panel
-// ---------------------------------------------------------------------------
-
-savedToggle.addEventListener("click", async () => {
-  show(savedView);
-  await loadSaved();
-});
-
-savedClose.addEventListener("click", () => {
-  hide(savedView);
-});
-
-async function loadSaved() {
-  try {
-    const response = await fetch("/api/restaurant-scout/saved");
-    const saved = await response.json();
-
-    savedList.innerHTML = "";
-
-    if (saved.length === 0) {
-      hide(savedList);
-      show(savedEmpty);
-      return;
-    }
-
-    show(savedList);
-    hide(savedEmpty);
-
-    saved.forEach((restaurant) => {
-      const item = document.createElement("div");
-      item.className = "saved-item";
-
-      const score = restaurant.final_report
-        ? restaurant.final_report.adjusted_score
-        : restaurant.analysis.safety_score;
-      const scoreClass = getScoreClass(score);
-
-      const date = new Date(restaurant.timestamp);
-      const dateStr = date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-
-      const rec = restaurant.final_report
-        ? restaurant.final_report.recommendation
-        : null;
-
-      item.innerHTML = `
-        <div class="saved-icon score-ring ${scoreClass}" style="width:40px;height:40px;font-size:16px;border-width:3px;">
-          ${score}
-        </div>
-        <div class="saved-info">
-          <div class="saved-name">${escapeHtml(restaurant.restaurant_name)}</div>
-          <div class="saved-date">${dateStr}${rec ? " &middot; " + rec : ""}</div>
-        </div>
-        <div class="saved-score safety-label-badge ${scoreClass}">
-          ${restaurant.analysis.safety_label}
-        </div>
-      `;
-
-      savedList.appendChild(item);
-    });
-  } catch (err) {
-    savedList.innerHTML = '<p style="padding:20px;color:var(--text-muted)">Failed to load saved restaurants.</p>';
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Sharing
 // ---------------------------------------------------------------------------
 
@@ -774,6 +702,7 @@ function resetToSearch() {
   locationInput.value = "";
   currentScoutResult = null;
   currentLocation = "";
+  isCurrentRestaurantSaved = false;
   hide(scoutResults);
   hide(questionnaireView);
   hide(questionnaireLoading);
@@ -795,6 +724,233 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ---------------------------------------------------------------------------
+// Save Restaurant
+// ---------------------------------------------------------------------------
+
+// Track whether current restaurant is saved
+let isCurrentRestaurantSaved = false;
+
+async function checkSavedStatus() {
+  const saveBtn = $("#save-restaurant-btn");
+  if (!saveBtn || !currentScoutResult) return;
+
+  const feedback = $("#save-feedback");
+  hide(feedback);
+
+  try {
+    // Build request body - prefer restaurant_id if available
+    const requestBody = {};
+    if (currentScoutResult.restaurant_id) {
+      requestBody.restaurant_id = currentScoutResult.restaurant_id;
+    } else {
+      requestBody.name = currentScoutResult.analysis.restaurant_name;
+      requestBody.location = currentLocation;
+    }
+
+    const response = await fetch("/api/check-saved", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
+
+    const data = await response.json();
+    isCurrentRestaurantSaved = data.saved;
+    updateSaveButtonState(saveBtn);
+  } catch (e) {
+    // Ignore errors, leave button in default state
+    isCurrentRestaurantSaved = false;
+    updateSaveButtonState(saveBtn);
+  }
+}
+
+function updateSaveButtonState(btn) {
+  if (!btn) return;
+
+  btn.disabled = false;
+
+  if (isCurrentRestaurantSaved) {
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg> Remove from Safe Spots';
+    btn.classList.add("saved");
+    btn.classList.add("unsave-mode");
+  } else {
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save to My Safe Spots';
+    btn.classList.remove("saved");
+    btn.classList.remove("unsave-mode");
+  }
+}
+
+const saveRestaurantBtn = $("#save-restaurant-btn");
+if (saveRestaurantBtn) {
+  saveRestaurantBtn.addEventListener("click", async () => {
+    if (!currentScoutResult || saveRestaurantBtn.disabled) return;
+
+    const feedback = $("#save-feedback");
+    const shareFeedback = $("#share-feedback");
+
+    // Hide any existing feedback
+    hide(feedback);
+    hide(shareFeedback);
+
+    saveRestaurantBtn.disabled = true;
+
+    // Build request body - prefer restaurant_id if available
+    const requestBody = {};
+    if (currentScoutResult.restaurant_id) {
+      requestBody.restaurant_id = currentScoutResult.restaurant_id;
+    } else {
+      requestBody.name = currentScoutResult.analysis.restaurant_name;
+      requestBody.location = currentLocation;
+    }
+
+    if (isCurrentRestaurantSaved) {
+      // UNSAVE flow
+      saveRestaurantBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Removing...';
+
+      try {
+        const response = await fetch("/api/unsave-restaurant", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          isCurrentRestaurantSaved = false;
+          updateSaveButtonState(saveRestaurantBtn);
+          feedback.textContent = "Removed from Safe Spots";
+          feedback.classList.remove("error");
+          show(feedback);
+          setTimeout(() => hide(feedback), 2500);
+        } else {
+          throw new Error(data.error || "Failed to remove");
+        }
+      } catch (e) {
+        updateSaveButtonState(saveRestaurantBtn);
+        feedback.textContent = e.message || "Failed to remove. Try again.";
+        feedback.classList.add("error");
+        show(feedback);
+      }
+    } else {
+      // SAVE flow
+      saveRestaurantBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Saving...';
+
+      try {
+        const response = await fetch("/api/save-restaurant", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          isCurrentRestaurantSaved = true;
+          updateSaveButtonState(saveRestaurantBtn);
+          feedback.textContent = data.already_saved ? "Already in Safe Spots" : "Saved to Safe Spots!";
+          feedback.classList.remove("error");
+          show(feedback);
+          setTimeout(() => hide(feedback), 2500);
+        } else {
+          throw new Error(data.error || "Save failed");
+        }
+      } catch (e) {
+        updateSaveButtonState(saveRestaurantBtn);
+        feedback.textContent = e.message || "Failed to save. Try again.";
+        feedback.classList.add("error");
+        show(feedback);
+      }
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Share Report
+// ---------------------------------------------------------------------------
+
+const shareReportBtn = $("#share-report-btn");
+if (shareReportBtn) {
+  shareReportBtn.addEventListener("click", async () => {
+    if (!currentScoutResult) return;
+
+    const feedback = $("#share-feedback");
+    const saveFeedback = $("#save-feedback");
+
+    // Hide any existing feedback
+    hide(saveFeedback);
+    hide(feedback);
+
+    const analysis = currentScoutResult.analysis;
+    // Use the original search term for cache-friendly URLs, fall back to Claude's name
+    const searchName = currentScoutResult.restaurant_name || analysis.restaurant_name;
+    const displayName = analysis.restaurant_name; // For display purposes
+    const safetyScore = analysis.safety_score;
+    const safetyLabel = analysis.safety_label;
+
+    // Build shareable URL using original search term (matches cache key)
+    const shareUrl = new URL("/restaurant-scout", window.location.origin);
+    shareUrl.searchParams.set("name", searchName);
+    if (currentLocation) {
+      shareUrl.searchParams.set("location", currentLocation);
+    }
+
+    const shareTitle = `${displayName} - Celiac Safety Report`;
+    const shareText = `Check out this celiac safety report for ${displayName}. Safety Score: ${safetyScore}/10 (${safetyLabel})`;
+
+    // Try native share first (mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl.toString(),
+        });
+        // Native share was successful (or cancelled) - no feedback needed
+        return;
+      } catch (err) {
+        // User cancelled or share failed - fall through to clipboard
+        if (err.name === "AbortError") {
+          return; // User cancelled, do nothing
+        }
+      }
+    }
+
+    // Fallback: Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl.toString());
+      feedback.textContent = "Link copied to clipboard!";
+      feedback.classList.remove("error");
+      feedback.classList.add("share-success");
+      show(feedback);
+      setTimeout(() => hide(feedback), 3000);
+    } catch (err) {
+      // Final fallback: textarea copy
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl.toString();
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+
+        feedback.textContent = "Link copied to clipboard!";
+        feedback.classList.remove("error");
+        feedback.classList.add("share-success");
+        show(feedback);
+        setTimeout(() => hide(feedback), 3000);
+      } catch (e) {
+        feedback.textContent = "Could not copy link";
+        feedback.classList.add("error");
+        feedback.classList.remove("share-success");
+        show(feedback);
+      }
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,144 @@
+/* Header Navigation */
+.header-nav {
+    display: flex;
+    align-items: center;
+}
+
+.header-nav .nav-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    white-space: nowrap;
+}
+
+.header-nav .nav-link:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+/* Score Card Action Buttons: Save & Share */
+.score-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.btn-save,
+.btn-save-signin,
+.btn-share {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+}
+
+.btn-save {
+    background: var(--safe);
+    color: white;
+    border-color: var(--safe);
+}
+
+.btn-save:hover {
+    background: #1a8d3b;
+    border-color: #1a8d3b;
+}
+
+.btn-save svg {
+    fill: none;
+}
+
+.btn-save-signin {
+    background: var(--bg);
+    color: var(--text-secondary);
+    border-color: var(--border);
+}
+
+.btn-save-signin:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+}
+
+.btn-share {
+    background: #6366f1;
+    color: white;
+    border-color: #6366f1;
+}
+
+.btn-share:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.btn-share:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+#save-restaurant-btn.saved {
+    background: var(--safe-bg);
+    color: var(--safe);
+    border-color: var(--safe);
+}
+
+#save-restaurant-btn.saved svg {
+    stroke: var(--safe);
+}
+
+#save-restaurant-btn.saved.unsave-mode {
+    background: var(--bg);
+    color: var(--text-secondary);
+    border-color: var(--border);
+}
+
+#save-restaurant-btn.saved.unsave-mode:hover {
+    background: var(--unsafe-bg);
+    color: var(--unsafe);
+    border-color: var(--unsafe);
+}
+
+#save-restaurant-btn.saved.unsave-mode:hover svg {
+    stroke: var(--unsafe);
+}
+
+#save-restaurant-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.action-feedback-container {
+    text-align: center;
+    min-height: 24px;
+    margin-top: 8px;
+}
+
+.action-feedback {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--safe);
+}
+
+.action-feedback.error {
+    color: var(--unsafe);
+}
+
+.action-feedback.share-success {
+    color: #6366f1;
+}
+
 /* Research Summary */
 .research-summary {
     background: var(--bg);
