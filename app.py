@@ -377,10 +377,95 @@ def signout():
 @app.route("/my-safe-spots")
 def my_safe_spots():
     if "user_id" not in session:
+        print("[MY-SAFE-SPOTS] No user_id in session, redirecting to signin")
         return redirect(url_for("signin"))
-    user = get_user_by_id(session["user_id"])
-    saved = get_user_saved_restaurants(session["user_id"])
+
+    user_id = session["user_id"]
+    print(f"[MY-SAFE-SPOTS] Loading saved restaurants for user_id={user_id}")
+
+    user = get_user_by_id(user_id)
+    print(f"[MY-SAFE-SPOTS] User from DB: {user}")
+
+    saved = get_user_saved_restaurants(user_id)
+    print(f"[MY-SAFE-SPOTS] Got {len(saved)} saved restaurants")
+    for i, r in enumerate(saved):
+        print(f"[MY-SAFE-SPOTS]   [{i}] id={r.get('id')}, name={r.get('name')}, location={r.get('location')}, score={r.get('safety_score')}")
+
     return render_template("my_safe_spots.html", user=user, saved_restaurants=saved)
+
+
+@app.route("/debug/saved-restaurants")
+def debug_saved_restaurants():
+    """Debug route to inspect database contents. Remove in production."""
+    from database import get_connection
+
+    conn = get_connection()
+    if conn is None:
+        return jsonify({"error": "No database connection"}), 500
+
+    try:
+        with conn.cursor() as cur:
+            # Get all users
+            cur.execute("SELECT id, email FROM users ORDER BY id")
+            users = [dict(row) for row in cur.fetchall()]
+
+            # Get all restaurants
+            cur.execute("""
+                SELECT id, name, location, safety_score, search_query, searched_at
+                FROM restaurants
+                ORDER BY id
+            """)
+            restaurants = [dict(row) for row in cur.fetchall()]
+
+            # Get all saved_restaurants relationships
+            cur.execute("""
+                SELECT sr.user_id, sr.restaurant_id, sr.saved_at,
+                       u.email as user_email,
+                       r.name as restaurant_name, r.location as restaurant_location
+                FROM saved_restaurants sr
+                JOIN users u ON sr.user_id = u.id
+                JOIN restaurants r ON sr.restaurant_id = r.id
+                ORDER BY sr.user_id, sr.saved_at DESC
+            """)
+            saved_restaurants = [dict(row) for row in cur.fetchall()]
+
+            # Get current session user
+            current_user_id = session.get("user_id")
+            current_user = None
+            if current_user_id:
+                cur.execute("SELECT id, email FROM users WHERE id = %s", (current_user_id,))
+                row = cur.fetchone()
+                if row:
+                    current_user = dict(row)
+
+            # Convert datetime objects to strings for JSON
+            for r in restaurants:
+                if r.get("searched_at"):
+                    r["searched_at"] = str(r["searched_at"])
+            for sr in saved_restaurants:
+                if sr.get("saved_at"):
+                    sr["saved_at"] = str(sr["saved_at"])
+
+            return jsonify({
+                "current_session": {
+                    "user_id": current_user_id,
+                    "user": current_user
+                },
+                "users": users,
+                "restaurants": restaurants,
+                "saved_restaurants": saved_restaurants,
+                "counts": {
+                    "users": len(users),
+                    "restaurants": len(restaurants),
+                    "saved_restaurants": len(saved_restaurants)
+                }
+            })
+    except Exception as e:
+        print(f"[DEBUG] Error: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------

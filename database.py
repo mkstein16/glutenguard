@@ -347,13 +347,24 @@ def get_user_saved_restaurants(user_id):
     """Get all saved restaurants for a user. Returns list of restaurant dicts."""
     conn = get_connection()
     if conn is None:
+        print(f"[DB] No connection for get_user_saved_restaurants")
         return []
+
+    print(f"[DB] Getting saved restaurants for user_id={user_id}")
 
     try:
         with conn.cursor() as cur:
+            # First check how many saved_restaurants exist for this user
+            cur.execute(
+                "SELECT COUNT(*) as count FROM saved_restaurants WHERE user_id = %s",
+                (user_id,)
+            )
+            count_row = cur.fetchone()
+            print(f"[DB] Found {count_row['count']} saved_restaurants entries for user {user_id}")
+
             cur.execute(
                 """
-                SELECT r.id, r.name, r.location, r.safety_score, r.analysis_json,
+                SELECT r.id, r.name, r.location, r.safety_score, r.search_query,
                        sr.saved_at
                 FROM saved_restaurants sr
                 JOIN restaurants r ON sr.restaurant_id = r.id
@@ -363,10 +374,42 @@ def get_user_saved_restaurants(user_id):
                 (user_id,),
             )
             rows = cur.fetchall()
-            return [dict(row) for row in rows]
+
+            # Extract display name from search_query or analysis_json
+            results = []
+            for row in rows:
+                r = dict(row)
+                # Use search_query for display (it has original casing)
+                # search_query is "Restaurant Name Location" format
+                if r.get('search_query'):
+                    # If location exists, remove it from end of search_query
+                    sq = r['search_query']
+                    loc = r.get('location', '')
+                    if loc and sq.lower().endswith(loc.lower()):
+                        display_name = sq[:-len(loc)].strip()
+                    else:
+                        display_name = sq.split()[0] if sq else r['name']
+                    # Actually, just use the search_query without location as name
+                    # Better: parse from analysis_json if available
+                    r['name'] = display_name if display_name else r['name'].title()
+                else:
+                    # Fallback: title case the normalized name
+                    r['name'] = r['name'].title()
+
+                # Title case location if it exists
+                if r.get('location'):
+                    r['location'] = r['location'].title()
+
+                print(f"[DB] Saved restaurant: id={r['id']}, name={r['name']}, location={r['location']}, score={r['safety_score']}")
+                results.append(r)
+
+            print(f"[DB] Returning {len(results)} saved restaurants")
+            return results
 
     except Exception as e:
         print(f"[DB] Error getting saved restaurants: {e}")
+        import traceback
+        traceback.print_exc()
         return []
     finally:
         conn.close()

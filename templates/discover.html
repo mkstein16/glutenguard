@@ -5,41 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>GlutenGuard - Discover</title>
+    <title>Celia - Discover</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/restaurant_scout.css') }}">
     <style>
         .cuisine-select {
             width: 100%;
-            padding: 12px 16px;
+            padding: var(--space-md) var(--space-lg);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 15px;
+            border-radius: var(--radius-md);
+            font-size: 16px;
             font-family: inherit;
-            margin-bottom: 16px;
+            margin-bottom: var(--space-lg);
             color: var(--text);
             background: var(--bg);
             cursor: pointer;
+            min-height: 48px;
+            transition: all var(--transition-fast);
         }
 
         .cuisine-select:focus {
             outline: none;
-            border-color: var(--text-muted);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
         }
 
         .discover-card {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 16px;
-            margin-bottom: 12px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-md);
+            box-shadow: var(--shadow);
+            transition: all var(--transition-fast);
+        }
+
+        .discover-card:hover {
+            box-shadow: var(--shadow-md);
         }
 
         .discover-card-header {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 8px;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-md);
         }
 
         .discover-card-info {
@@ -48,66 +56,86 @@
         }
 
         .discover-name {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             color: var(--text);
-            margin-bottom: 2px;
+            margin-bottom: 4px;
+            letter-spacing: -0.01em;
         }
 
         .discover-address {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text-muted);
         }
 
         .discover-cached-score {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: 700;
-            border: 3px solid;
+            font-size: 18px;
+            font-weight: 800;
+            border: 4px solid;
             flex-shrink: 0;
         }
 
+        .discover-cached-score.high-risk {
+            border-color: var(--unsafe);
+            color: var(--unsafe);
+            background: var(--unsafe-bg);
+        }
+
+        .discover-cached-score.moderate-risk {
+            border-color: var(--warning);
+            color: var(--warning);
+            background: var(--warning-bg);
+        }
+
+        .discover-cached-score.low-risk,
+        .discover-cached-score.very-low-risk {
+            border-color: var(--safe);
+            color: var(--safe);
+            background: var(--safe-bg);
+        }
+
         .discover-safety-note {
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-secondary);
             line-height: 1.5;
-            margin-bottom: 8px;
+            margin-bottom: var(--space-sm);
         }
 
         .discover-source {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-muted);
-            margin-bottom: 12px;
+            margin-bottom: var(--space-lg);
         }
 
         .discover-actions {
             display: flex;
-            gap: 8px;
+            gap: var(--space-md);
         }
 
         .discover-actions .btn {
             flex: 1;
-            padding: 8px 12px;
-            font-size: 13px;
+            min-height: 44px;
+            font-size: 15px;
         }
 
         #discover-results {
-            margin-top: 16px;
+            margin-top: var(--space-xl);
         }
 
         .no-results {
             text-align: center;
-            padding: 32px 16px;
+            padding: var(--space-3xl) var(--space-xl);
             color: var(--text-muted);
         }
 
         .no-results p {
-            font-size: 14px;
+            font-size: 15px;
             line-height: 1.5;
         }
     </style>
@@ -125,7 +153,6 @@
                 <h1>Discover</h1>
                 <p class="tagline">Find celiac-friendly restaurants</p>
             </div>
-            <div style="width: 40px;"></div>
         </header>
 
         <main>
@@ -168,8 +195,76 @@
                 <p class="loading-hint">Checking Find Me Gluten Free, Yelp, and more</p>
             </div>
         </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="/" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="/my-safe-spots" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Saved</span>
+            </a>
+            <button class="nav-item" id="account-nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Account</span>
+            </button>
+        </nav>
+
+        <!-- Account Modal -->
+        <div class="account-modal-overlay" id="account-modal">
+            <div class="account-modal">
+                <div class="account-modal-header">
+                    <h3>Account</h3>
+                    <button class="account-modal-close" id="account-modal-close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                {% if user %}
+                <div class="account-email">
+                    <div class="account-email-label">Signed in as</div>
+                    <div class="account-email-value">{{ user.email }}</div>
+                </div>
+                <a href="/signout" class="account-signout">Sign Out</a>
+                {% else %}
+                <a href="/signin" class="account-signin">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
+    <script>
+        // Account modal toggle
+        const accountBtn = document.getElementById('account-nav-btn');
+        const accountModal = document.getElementById('account-modal');
+        const accountClose = document.getElementById('account-modal-close');
+
+        accountBtn.addEventListener('click', () => {
+            accountModal.classList.add('visible');
+        });
+
+        accountClose.addEventListener('click', () => {
+            accountModal.classList.remove('visible');
+        });
+
+        accountModal.addEventListener('click', (e) => {
+            if (e.target === accountModal) {
+                accountModal.classList.remove('visible');
+            }
+        });
+    </script>
     <script>
         const $ = (sel) => document.querySelector(sel);
         const show = (el) => el.classList.remove("hidden");

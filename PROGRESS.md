@@ -1,7 +1,7 @@
-# GlutenGuard - Project Status
+# Celia - Project Status
 
-**Last Updated:** February 6, 2026 (evening)
-**Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/
+**Last Updated:** February 6, 2026 (late evening)
+**Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/ (will move to askcelia.com)
 **Tech Stack:** Flask (Python) | HTML/CSS/JS (mobile-first) | Anthropic Claude API (Sonnet, vision + web search) | PostgreSQL on Render | JSON file storage (scan history only)
 
 ---
@@ -12,9 +12,9 @@
 
 Core problem: Celiacs feel "high-maintenance" when making plans. They don't want to be difficult, but their condition forces constant questions, research, and anxiety.
 
-Solution: GlutenGuard makes you the friend who always knows the best spots — not the difficult one who needs accommodations.
+Solution: Celia makes you the friend who always knows the best spots — not the difficult one who needs accommodations.
 
-Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance."
+Tagline: "Your confident friend for dining out gluten-free"
 
 ---
 
@@ -28,10 +28,16 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 - Scan history (JSON-based, resets on Render restart)
 - Deployed and working at glutenguard.onrender.com
 
-### 2. Restaurant Safety Scout ✅ (needs polish)
+### 2. Restaurant Safety Scout ✅ (redesigned)
 - Search by restaurant name + optional location
 - Claude does web research (restaurant website, FMGF, Yelp/Google reviews)
 - Returns structured JSON: safety score (0-10), menu analysis, kitchen risks, positive indicators
+- **New scannable results layout:**
+  - Large score circle with gradient colors (green/amber/red)
+  - "Why It's Safe" section with bullet points
+  - Menu highlights shown upfront as pills
+  - "Things to Know" warnings section
+  - Expandable sections for call script and full analysis
 - Menu items categorized: ✅ Likely Safe | ⚠️ Ask First | 🚩 Red Flags
 - Call script generator with customizable questions (quick/thorough presets)
 - Post-call questionnaire (7 yes/no/unsure questions)
@@ -53,15 +59,21 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 - "Find Better Options Nearby" button (user-triggered, not automatic)
 - Can likely re-enable now that caching is implemented — needs testing
 
-### 5. Hub/Navigation ✅
-- Homepage with three feature cards: Label Scanner + Restaurant Scout + Discover
+### 5. Hub/Navigation ✅ (redesigned)
+- **New homepage layout:**
+  - Discover + Restaurant Scout as primary features (large cards with pastel icons)
+  - Label Scanner as secondary utility under "Quick Tools"
+  - Warm gradient background (peachy to cream)
+- **Bottom navigation bar:** Home, Saved, Account
+- **Account modal:** Bottom sheet with sign in/out
 - Back navigation between features
-- Consistent mobile-first styling
+- Inter font family + consistent design system
+- Mobile-first responsive styling
 
 ### 6. User Accounts & Saved Restaurants ✅
 - Simple email-based sign-in (no password yet, Flask sessions)
 - Save/unsave restaurants from scout results
-- "My Safe Spots" page showing all saved restaurants with clickable cards
+- **"My Safe Spots" page:** Shows saved restaurants with score circles, "View Report" auto-loads cached results
 - Share restaurant reports via native mobile share or clipboard copy
 - Shared links use cached results for instant loading
 - Save state persists across sessions (PostgreSQL)
@@ -93,7 +105,8 @@ Tagline: "Stop apologizing for having celiac. Be confident, not high-maintenance
 Tasks that came up but aren't part of the main sprint:
 
 - [ ] Deploy latest code to Render (user accounts, share, save features)
-- [ ] Rebrand app/repo from GlutenGuard → Celia (code, templates, Render URL)
+- [x] Rebrand app from GlutenGuard → Celia (code, templates) ✅ Complete
+- [ ] Rename repo and Render URL to match Celia branding
 - [ ] Purchase askcelia.com domain
 - [ ] Post first Twitter content (blocked until rate limit clears)
 - [ ] Post intro discussion in r/Celiac
@@ -243,7 +256,7 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 - ✅ PostgreSQL database live with 3 tables
 - ✅ Created Twitter @UseCelia + Reddit u/glutenfreebuilder
 - ✅ Created social presence as "Celia" (@UseCelia, u/glutenfreebuilder)
-- 🔄 Full app rebrand to Celia is future TODO
+- ✅ Full app rebrand to Celia complete (Feb 6)
 
 ### Feb 6
 - ✅ Restaurant caching implemented (database.py + app.py)
@@ -270,4 +283,33 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 - ✅ Fixed cache lookup for shared links (was using Claude's formatted name, now uses original search term)
 - ✅ Added logging for cache hits/misses in backend
 - 📋 Week 1 core features complete! Ready for deployment.
-- 📋 Next: Deploy to Render, then start Week 2 (pre-populate restaurants + user testing)
+
+### Feb 6 (continued - evening session 2)
+- ✅ Redesigned restaurant results page - scannable layout with visual hierarchy
+  - "Why It's Safe" section with bullet points
+  - Menu highlights as cards (not buried in collapsible sections)
+  - "Things to Know" warnings section
+  - Expandable sections for call script and full analysis
+- ✅ Redesigned homepage with better feature hierarchy
+  - Bottom navigation bar (Home, Saved, Account)
+  - Discover and Restaurant Scout as primary features (large cards)
+  - Label Scanner as secondary utility (smaller, under "Quick Tools")
+  - Cleaner header (removed cramped email display)
+  - Account menu in bottom sheet modal
+- ✅ Applied comprehensive design system
+  - Warm gradient background (peachy to cream)
+  - Clean pastel icon backgrounds (blue, peach, green)
+  - Inter font family
+  - Consistent spacing scale (8px, 12px, 16px, 24px, 32px, 48px)
+  - Softer shadows and rounded corners
+  - Professional, warm aesthetic
+- ✅ Rebranded from GlutenGuard to Celia
+  - Updated all templates and page titles
+  - New tagline: "Your confident friend for dining out gluten-free"
+  - Share functionality updated
+- ✅ Fixed bugs:
+  - "View Full Report" from My Safe Spots now auto-loads restaurant
+  - JavaScript null checks prevent crashes on missing elements
+  - Session handling improved
+- 📋 UX is polished and ready for Week 2 (pre-population + user testing)
+- 📋 Ready to deploy to Render with updated design

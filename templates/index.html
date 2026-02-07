@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>GlutenGuard</title>
+    <title>Celia</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -146,8 +146,76 @@
                 <p>No scans yet. Start by scanning a label!</p>
             </div>
         </aside>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="/" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="/my-safe-spots" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Saved</span>
+            </a>
+            <button class="nav-item" id="account-nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Account</span>
+            </button>
+        </nav>
+
+        <!-- Account Modal -->
+        <div class="account-modal-overlay" id="account-modal">
+            <div class="account-modal">
+                <div class="account-modal-header">
+                    <h3>Account</h3>
+                    <button class="account-modal-close" id="account-modal-close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                {% if user %}
+                <div class="account-email">
+                    <div class="account-email-label">Signed in as</div>
+                    <div class="account-email-value">{{ user.email }}</div>
+                </div>
+                <a href="/signout" class="account-signout">Sign Out</a>
+                {% else %}
+                <a href="/signin" class="account-signin">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        // Account modal toggle
+        const accountBtn = document.getElementById('account-nav-btn');
+        const accountModal = document.getElementById('account-modal');
+        const accountClose = document.getElementById('account-modal-close');
+
+        accountBtn.addEventListener('click', () => {
+            accountModal.classList.add('visible');
+        });
+
+        accountClose.addEventListener('click', () => {
+            accountModal.classList.remove('visible');
+        });
+
+        accountModal.addEventListener('click', (e) => {
+            if (e.target === accountModal) {
+                accountModal.classList.remove('visible');
+            }
+        });
+    </script>
 </body>
 </html>

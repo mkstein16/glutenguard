@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>GlutenGuard - Restaurant Scout</title>
+    <title>Celia - Restaurant Scout</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/restaurant_scout.css') }}">
 </head>
@@ -21,11 +21,6 @@
             <div class="header-content">
                 <h1>Restaurant Scout</h1>
                 <p class="tagline">Research before you dine</p>
-            </div>
-            <div class="header-nav">
-                {% if user %}
-                <a href="/my-safe-spots" class="nav-link">My Safe Spots</a>
-                {% endif %}
             </div>
         </header>
 
@@ -55,13 +50,17 @@
 
             <!-- Section 3: Results -->
             <div id="scout-results" class="hidden">
-                <!-- Score Card with Save Button -->
-                <div id="score-card">
-                    <div id="safety-score-ring" class="score-ring"></div>
-                    <div id="safety-label" class="safety-label-badge"></div>
-                    <h2 id="scout-restaurant-name"></h2>
-                    <p id="scout-cuisine" class="cuisine-type"></p>
-                    <p id="scout-summary"></p>
+                <!-- 1. HERO CARD -->
+                <div id="score-card" class="hero-card">
+                    <div class="hero-top">
+                        <div id="safety-score-ring" class="score-ring"></div>
+                        <div class="hero-info">
+                            <h2 id="scout-restaurant-name"></h2>
+                            <p id="scout-cuisine" class="cuisine-type"></p>
+                            <div id="safety-label" class="safety-label-badge"></div>
+                        </div>
+                    </div>
+                    <p id="scout-summary" class="hero-summary"></p>
 
                     <!-- Action Buttons: Save & Share -->
                     <div id="score-card-actions" class="score-card-actions">
@@ -70,21 +69,21 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                             </svg>
-                            Save to My Safe Spots
+                            <span>Save</span>
                         </button>
                         {% else %}
                         <a href="/signin" class="btn btn-save-signin">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                             </svg>
-                            Sign In to Save
+                            <span>Sign In</span>
                         </a>
                         {% endif %}
                         <button id="share-report-btn" class="btn btn-share">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                             </svg>
-                            Share Report
+                            <span>Share</span>
                         </button>
                     </div>
                     <div id="action-feedback-container" class="action-feedback-container">
@@ -93,126 +92,150 @@
                     </div>
                 </div>
 
-                <!-- Research Summary -->
-                <div id="research-summary-card" class="research-summary">
-                    <p id="research-summary"></p>
+                <!-- 2. WHY IT'S SAFE Section -->
+                <div id="safety-indicators" class="result-section safety-section hidden">
+                    <h3 class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Why It's Safe
+                    </h3>
+                    <ul id="safety-indicators-list" class="indicator-list"></ul>
                 </div>
 
-                <!-- Community Sentiment -->
-                <details class="detail-group neutral" id="community-sentiment-section" open>
-                    <summary>
-                        <span class="detail-icon">i</span>
-                        Community Reviews
-                    </summary>
-                    <p id="community-sentiment"></p>
-                </details>
+                <!-- 3. MENU HIGHLIGHTS Section -->
+                <div id="menu-highlights" class="result-section menu-section hidden">
+                    <h3 class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                        Menu Highlights
+                    </h3>
+                    <div id="menu-pills" class="menu-pills"></div>
+                    <button id="see-all-menu-btn" class="btn-link hidden">See all safe items</button>
+                </div>
 
-                <!-- This Restaurant: Specific Findings -->
-                <details class="detail-group safe" id="specific-positives-section">
-                    <summary>
-                        <span class="detail-icon">&#10003;</span>
-                        This Restaurant: Positives
-                        <span class="detail-count" id="specific-positives-count"></span>
-                    </summary>
-                    <ul id="specific-positives-list"></ul>
-                </details>
+                <!-- 4. THINGS TO KNOW Section (conditional) -->
+                <div id="things-to-know" class="result-section warning-section hidden">
+                    <h3 class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Things to Know
+                    </h3>
+                    <ul id="things-to-know-list" class="warning-list"></ul>
+                </div>
 
-                <details class="detail-group danger" id="specific-risks-section">
-                    <summary>
-                        <span class="detail-icon">!</span>
-                        This Restaurant: Risks
-                        <span class="detail-count" id="specific-risks-count"></span>
-                    </summary>
-                    <ul id="specific-risks-list"></ul>
-                </details>
-
-                <!-- Staff Knowledge -->
-                <div id="staff-knowledge-card" class="staff-knowledge">
+                <!-- Staff Knowledge Badge (inline) -->
+                <div id="staff-knowledge-card" class="staff-knowledge-inline hidden">
+                    <span class="staff-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </span>
                     <span class="staff-label">Staff Knowledge:</span>
                     <span id="staff-knowledge-badge" class="staff-badge"></span>
                 </div>
 
-                <!-- Menu Analysis -->
-                <div id="menu-accordion">
-                    <details class="detail-group safe" id="likely-safe-section">
-                        <summary>
-                            <span class="detail-icon">&#10003;</span>
-                            Likely Safe
-                            <span class="detail-count" id="safe-count"></span>
+                <!-- 5. EXPANDABLE SECTIONS -->
+                <div class="expandable-sections">
+                    <!-- Call Script -->
+                    <details class="expand-section" id="call-script-section">
+                        <summary class="expand-header">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            Call Script
+                            <span class="expand-chevron">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
                         </summary>
-                        <ul id="likely-safe-list" class="menu-list"></ul>
-                    </details>
-
-                    <details class="detail-group warning" id="ask-first-section">
-                        <summary>
-                            <span class="detail-icon">?</span>
-                            Ask First
-                            <span class="detail-count" id="ask-count"></span>
-                        </summary>
-                        <ul id="ask-first-list" class="menu-list"></ul>
-                    </details>
-
-                    <details class="detail-group danger" id="red-flags-section">
-                        <summary>
-                            <span class="detail-icon">!</span>
-                            Red Flags
-                            <span class="detail-count" id="flags-count"></span>
-                        </summary>
-                        <ul id="red-flags-list" class="menu-list"></ul>
-                    </details>
-                </div>
-
-                <!-- Cuisine Context -->
-                <details class="detail-group neutral" id="cuisine-context-section">
-                    <summary>
-                        <span class="detail-icon">i</span>
-                        General Cuisine Context
-                    </summary>
-                    <div id="cuisine-context-content">
-                        <div id="cuisine-risks-group">
-                            <h4 class="cuisine-subheading">Common Risks</h4>
-                            <ul id="cuisine-general-risks"></ul>
+                        <div class="expand-content">
+                            <p id="call-script-context" class="script-context"></p>
+                            <div id="script-presets" class="script-presets">
+                                <button class="preset-btn active" data-preset="quick">Quick</button>
+                                <button class="preset-btn" data-preset="thorough">Thorough</button>
+                            </div>
+                            <ol id="call-script-list"></ol>
+                            <button id="show-additional-toggle" class="btn-link hidden">Show All Questions</button>
                         </div>
-                        <div id="cuisine-positives-group">
-                            <h4 class="cuisine-subheading">Common Positives</h4>
-                            <ul id="cuisine-general-positives"></ul>
+                    </details>
+
+                    <!-- Full Menu Analysis -->
+                    <details class="expand-section" id="full-menu-section">
+                        <summary class="expand-header">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            Full Menu Analysis
+                            <span class="expand-chevron">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="expand-content">
+                            <div class="menu-category safe-category">
+                                <h4><span class="cat-icon">✓</span> Likely Safe <span class="cat-count" id="safe-count"></span></h4>
+                                <ul id="likely-safe-list" class="menu-list"></ul>
+                            </div>
+                            <div class="menu-category ask-category">
+                                <h4><span class="cat-icon">?</span> Ask First <span class="cat-count" id="ask-count"></span></h4>
+                                <ul id="ask-first-list" class="menu-list"></ul>
+                            </div>
+                            <div class="menu-category avoid-category">
+                                <h4><span class="cat-icon">!</span> Red Flags <span class="cat-count" id="flags-count"></span></h4>
+                                <ul id="red-flags-list" class="menu-list"></ul>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Full Analysis -->
+                    <details class="expand-section" id="full-analysis-section">
+                        <summary class="expand-header">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            Full Analysis
+                            <span class="expand-chevron">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="expand-content">
+                            <div class="analysis-block">
+                                <h4>Research Summary</h4>
+                                <p id="research-summary"></p>
+                            </div>
+                            <div class="analysis-block" id="cuisine-context-block">
+                                <h4>Cuisine Context</h4>
+                                <div id="cuisine-context-content">
+                                    <p class="context-label">Common Risks:</p>
+                                    <ul id="cuisine-general-risks"></ul>
+                                    <p class="context-label">Common Positives:</p>
+                                    <ul id="cuisine-general-positives"></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Community Reviews -->
+                    <details class="expand-section" id="community-section">
+                        <summary class="expand-header">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Community Reviews
+                            <span class="expand-chevron">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="expand-content">
+                            <p id="community-sentiment"></p>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="results-actions">
+                    <button id="find-alternatives-btn" class="btn btn-alt btn-full hidden">Find Better Options Nearby</button>
+
+                    <!-- Alternatives -->
+                    <div id="alternatives-section" class="hidden">
+                        <div id="alternatives-loading" class="hidden">
+                            <div class="small-spinner"></div>
+                            <p class="loading-hint">Finding safer alternatives nearby...</p>
+                        </div>
+                        <div id="alternatives-results" class="hidden">
+                            <h3>Better Options Nearby</h3>
+                            <div id="alternatives-list"></div>
                         </div>
                     </div>
-                </details>
 
-                <!-- Call Script -->
-                <div id="call-script-card">
-                    <h3>Questions to Ask When You Call</h3>
-                    <p id="call-script-context"></p>
-                    <div id="script-presets" class="script-presets">
-                        <button class="preset-btn active" data-preset="quick">Quick</button>
-                        <button class="preset-btn" data-preset="thorough">Thorough</button>
-                    </div>
-                    <ol id="call-script-list"></ol>
-                    <button id="show-additional-toggle" class="btn-link hidden">Show All Questions</button>
+                    <button id="start-questionnaire-btn" class="btn btn-primary btn-full">I Called — Answer Follow-up Questions</button>
+                    <button id="new-scout-btn" class="btn btn-secondary btn-full">Scout Another Restaurant</button>
                 </div>
-
-                <div class="share-container">
-                    <button id="share-results-btn" class="btn btn-secondary btn-full">Share Report</button>
-                    <span id="share-results-feedback" class="share-feedback hidden">Copied to clipboard!</span>
-                </div>
-
-                <button id="find-alternatives-btn" class="btn btn-alt btn-full hidden">Find Better Options Nearby</button>
-
-                <!-- Alternatives -->
-                <div id="alternatives-section" class="hidden">
-                    <div id="alternatives-loading" class="hidden">
-                        <div class="small-spinner"></div>
-                        <p class="loading-hint">Finding safer alternatives nearby...</p>
-                    </div>
-                    <div id="alternatives-results" class="hidden">
-                        <h3>Better Options Nearby</h3>
-                        <div id="alternatives-list"></div>
-                    </div>
-                </div>
-
-                <button id="start-questionnaire-btn" class="btn btn-primary btn-full">I Called &mdash; Answer Follow-up Questions</button>
-                <button id="new-scout-btn" class="btn btn-secondary btn-full">Scout Another Restaurant</button>
             </div>
 
             <!-- Section 4: Questionnaire -->
@@ -292,8 +315,75 @@
             </div>
         </main>
 
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="/" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="/my-safe-spots" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Saved</span>
+            </a>
+            <button class="nav-item" id="account-nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Account</span>
+            </button>
+        </nav>
+
+        <!-- Account Modal -->
+        <div class="account-modal-overlay" id="account-modal">
+            <div class="account-modal">
+                <div class="account-modal-header">
+                    <h3>Account</h3>
+                    <button class="account-modal-close" id="account-modal-close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                {% if user %}
+                <div class="account-email">
+                    <div class="account-email-label">Signed in as</div>
+                    <div class="account-email-value">{{ user.email }}</div>
+                </div>
+                <a href="/signout" class="account-signout">Sign Out</a>
+                {% else %}
+                <a href="/signin" class="account-signin">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/restaurant_scout.js') }}"></script>
+    <script>
+        // Account modal toggle
+        const accountBtn = document.getElementById('account-nav-btn');
+        const accountModal = document.getElementById('account-modal');
+        const accountClose = document.getElementById('account-modal-close');
+
+        accountBtn.addEventListener('click', () => {
+            accountModal.classList.add('visible');
+        });
+
+        accountClose.addEventListener('click', () => {
+            accountModal.classList.remove('visible');
+        });
+
+        accountModal.addEventListener('click', (e) => {
+            if (e.target === accountModal) {
+                accountModal.classList.remove('visible');
+            }
+        });
+    </script>
 </body>
 </html>

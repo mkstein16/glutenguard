@@ -5,141 +5,231 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>GlutenGuard</title>
+    <title>Celia</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         .hub-main {
-            padding: 32px 20px;
-            max-width: 480px;
+            padding: var(--space-xl) var(--space-xl) calc(var(--bottom-nav-height) + var(--space-3xl));
+            max-width: 520px;
             margin: 0 auto;
         }
 
+        /* Welcome Section */
         .hub-welcome {
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: var(--space-2xl);
+            padding: var(--space-lg) 0;
         }
 
         .hub-welcome h2 {
-            font-size: 22px;
+            font-size: 28px;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: var(--space-sm);
+            color: var(--text);
+            letter-spacing: -0.02em;
         }
 
         .hub-welcome p {
-            font-size: 14px;
-            color: var(--text-muted);
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
         }
 
-        .hub-cards {
+        /* Primary Cards */
+        .primary-cards {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
         }
 
-        .hub-card {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: var(--bg);
-            border: 1px solid var(--border);
+        .primary-card {
+            display: block;
+            background: white;
             border-radius: var(--radius);
-            padding: 20px;
+            padding: 28px;
             text-decoration: none;
             color: inherit;
-            box-shadow: var(--shadow);
-            transition: box-shadow 0.15s, border-color 0.15s;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
         }
 
-        .hub-card:hover {
-            box-shadow: var(--shadow-lg);
-            border-color: var(--text-muted);
+        .primary-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
         }
 
-        .hub-card:active {
-            transform: scale(0.99);
+        .primary-card:active {
+            transform: translateY(0);
         }
 
-        .hub-card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+        .primary-card-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-md);
+        }
+
+        .primary-card-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
         }
 
-        .hub-card-icon.scanner {
-            background: var(--safe-bg);
-            color: var(--safe);
+        .primary-card-icon svg {
+            width: 32px;
+            height: 32px;
         }
 
-        .hub-card-icon.scout {
-            background: var(--investigate-bg);
-            color: var(--investigate);
+        .primary-card-icon.discover {
+            background: #dbeafe;
+            color: #2563eb;
         }
 
-        .hub-card-icon.discover {
-            background: #e8f4fd;
-            color: #0077cc;
+        .primary-card-icon.scout {
+            background: #fed7aa;
+            color: #ea580c;
         }
 
-        .hub-card-info {
+        .primary-card-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .primary-card-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: var(--space-lg);
+        }
+
+        .primary-card-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-size: 15px;
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .primary-card.scout-card .primary-card-cta {
+            color: #ea580c;
+        }
+
+        .primary-card-cta svg {
+            width: 20px;
+            height: 20px;
+            transition: transform var(--transition-fast);
+        }
+
+        .primary-card:hover .primary-card-cta svg {
+            transform: translateX(4px);
+        }
+
+        /* Separator */
+        .section-separator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .section-separator::before,
+        .section-separator::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-light);
+        }
+
+        .section-separator span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* Secondary Cards */
+        .secondary-cards {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        .secondary-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            background: white;
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            text-decoration: none;
+            color: inherit;
+            transition: all var(--transition-fast);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            min-height: 72px;
+        }
+
+        .secondary-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .secondary-card:active {
+            transform: translateY(0);
+        }
+
+        .secondary-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .secondary-card-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .secondary-card-info {
             flex: 1;
             min-width: 0;
         }
 
-        .hub-card-info h3 {
+        .secondary-card-info h3 {
             font-size: 16px;
             font-weight: 600;
+            color: var(--text);
             margin-bottom: 2px;
         }
 
-        .hub-card-info p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.4;
+        .secondary-card-info p {
+            font-size: 14px;
+            color: var(--text-muted);
         }
 
-        .hub-card-arrow {
+        .secondary-card-arrow {
             color: var(--text-muted);
             flex-shrink: 0;
+            transition: transform var(--transition-fast);
         }
 
-        .user-nav {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 13px;
-        }
-
-        .user-email {
-            color: var(--text-secondary);
-        }
-
-        .user-nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-
-        .user-nav a:hover {
-            color: var(--text);
-            text-decoration: underline;
-        }
-
-        .user-nav .safe-spots-link {
-            background: var(--safe-bg);
-            color: var(--safe);
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .user-nav .safe-spots-link:hover {
-            background: var(--safe);
-            color: white;
-            text-decoration: none;
+        .secondary-card:hover .secondary-card-arrow {
+            transform: translateX(2px);
         }
     </style>
 </head>
@@ -147,79 +237,144 @@
     <div id="app">
         <header>
             <div class="header-content">
-                <h1>GlutenGuard</h1>
-                <p class="tagline">Your celiac safety toolkit</p>
-            </div>
-            <div class="user-nav">
-                {% if user %}
-                    <a href="/my-safe-spots" class="safe-spots-link">My Safe Spots</a>
-                    <span class="user-email">{{ user.email }}</span>
-                    <a href="/signout">Sign out</a>
-                {% else %}
-                    <a href="/signin">Sign in</a>
-                {% endif %}
+                <h1>Celia</h1>
+                <p class="tagline">Your confident friend for dining out gluten-free</p>
             </div>
         </header>
 
         <main class="hub-main">
             <div class="hub-welcome">
-                <h2>What would you like to do?</h2>
-                <p>Choose a tool to get started</p>
+                <h2>Where do you want to eat?</h2>
+                <p>Find safe restaurants, check menus, dine with confidence</p>
             </div>
 
-            <div class="hub-cards">
-                <a href="/scan" class="hub-card">
-                    <div class="hub-card-icon scanner">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Primary Features -->
+            <div class="primary-cards">
+                <a href="/discover" class="primary-card discover-card">
+                    <div class="primary-card-header">
+                        <div class="primary-card-icon discover">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                        </div>
+                        <span class="primary-card-title">Discover</span>
+                    </div>
+                    <p class="primary-card-desc">Browse restaurants by cuisine and location</p>
+                    <span class="primary-card-cta">
+                        Browse Restaurants
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                    </span>
+                </a>
+
+                <a href="/restaurant-scout" class="primary-card scout-card">
+                    <div class="primary-card-header">
+                        <div class="primary-card-icon scout">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                        </div>
+                        <span class="primary-card-title">Restaurant Scout</span>
+                    </div>
+                    <p class="primary-card-desc">Research a specific restaurant before you go</p>
+                    <span class="primary-card-cta">
+                        Search Restaurant
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                    </span>
+                </a>
+            </div>
+
+            <!-- Separator -->
+            <div class="section-separator">
+                <span>Quick Tools</span>
+            </div>
+
+            <!-- Secondary Features -->
+            <div class="secondary-cards">
+                <a href="/scan" class="secondary-card">
+                    <div class="secondary-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
                         </svg>
                     </div>
-                    <div class="hub-card-info">
+                    <div class="secondary-card-info">
                         <h3>Label Scanner</h3>
-                        <p>Scan ingredient labels to check for hidden gluten</p>
+                        <p>Check ingredients for hidden gluten</p>
                     </div>
-                    <div class="hub-card-arrow">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"/>
-                        </svg>
-                    </div>
-                </a>
-
-                <a href="/restaurant-scout" class="hub-card">
-                    <div class="hub-card-icon scout">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                        </svg>
-                    </div>
-                    <div class="hub-card-info">
-                        <h3>Restaurant Scout</h3>
-                        <p>Research restaurant safety before you dine out</p>
-                    </div>
-                    <div class="hub-card-arrow">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"/>
-                        </svg>
-                    </div>
-                </a>
-
-                <a href="/discover" class="hub-card">
-                    <div class="hub-card-icon discover">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                        </svg>
-                    </div>
-                    <div class="hub-card-info">
-                        <h3>Discover</h3>
-                        <p>Find celiac-friendly restaurants by cuisine type</p>
-                    </div>
-                    <div class="hub-card-arrow">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"/>
-                        </svg>
+                    <div class="secondary-card-arrow">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                 </a>
             </div>
         </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="/" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="/my-safe-spots" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Saved</span>
+            </a>
+            <button class="nav-item" id="account-nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Account</span>
+            </button>
+        </nav>
+
+        <!-- Account Modal -->
+        <div class="account-modal-overlay" id="account-modal">
+            <div class="account-modal">
+                <div class="account-modal-header">
+                    <h3>Account</h3>
+                    <button class="account-modal-close" id="account-modal-close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                {% if user %}
+                <div class="account-email">
+                    <div class="account-email-label">Signed in as</div>
+                    <div class="account-email-value">{{ user.email }}</div>
+                </div>
+                <a href="/signout" class="account-signout">Sign Out</a>
+                {% else %}
+                <a href="/signin" class="account-signin">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Account modal toggle
+        const accountBtn = document.getElementById('account-nav-btn');
+        const accountModal = document.getElementById('account-modal');
+        const accountClose = document.getElementById('account-modal-close');
+
+        accountBtn.addEventListener('click', () => {
+            accountModal.classList.add('visible');
+        });
+
+        accountClose.addEventListener('click', () => {
+            accountModal.classList.remove('visible');
+        });
+
+        accountModal.addEventListener('click', (e) => {
+            if (e.target === accountModal) {
+                accountModal.classList.remove('visible');
+            }
+        });
+    </script>
 </body>
 </html>

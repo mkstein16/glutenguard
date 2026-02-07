@@ -1,6 +1,6 @@
 const $ = (sel) => document.querySelector(sel);
-const show = (el) => el.classList.remove("hidden");
-const hide = (el) => el.classList.add("hidden");
+const show = (el) => { if (el) el.classList.remove("hidden"); };
+const hide = (el) => { if (el) el.classList.add("hidden"); };
 
 // Elements
 const restaurantNameInput = $("#restaurant-name");
@@ -33,49 +33,53 @@ const questionnaireQuestions = [
 // Scout Search
 // ---------------------------------------------------------------------------
 
-scoutBtn.addEventListener("click", async () => {
-  const name = restaurantNameInput.value.trim();
-  if (!name) {
-    restaurantNameInput.focus();
-    return;
-  }
-
-  const menuUrl = menuUrlInput.value.trim();
-  currentLocation = locationInput.value.trim();
-
-  hide(searchView);
-  show(scoutLoading);
-
-  try {
-    const response = await fetch("/api/restaurant-scout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ restaurant_name: name, menu_url: menuUrl, location: currentLocation }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Scout failed");
+if (scoutBtn) {
+  scoutBtn.addEventListener("click", async () => {
+    const name = restaurantNameInput.value.trim();
+    if (!name) {
+      restaurantNameInput.focus();
+      return;
     }
 
-    currentScoutResult = data;
-    displayScoutResults(data);
-  } catch (err) {
-    alert(err.message || "Something went wrong. Please try again.");
-    resetToSearch();
-  } finally {
-    hide(scoutLoading);
-  }
-});
+    const menuUrl = menuUrlInput ? menuUrlInput.value.trim() : "";
+    currentLocation = locationInput ? locationInput.value.trim() : "";
+
+    hide(searchView);
+    show(scoutLoading);
+
+    try {
+      const response = await fetch("/api/restaurant-scout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurant_name: name, menu_url: menuUrl, location: currentLocation }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Scout failed");
+      }
+
+      currentScoutResult = data;
+      displayScoutResults(data);
+    } catch (err) {
+      alert(err.message || "Something went wrong. Please try again.");
+      resetToSearch();
+    } finally {
+      hide(scoutLoading);
+    }
+  });
+}
 
 // Allow Enter key on restaurant name input
-restaurantNameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    scoutBtn.click();
-  }
-});
+if (restaurantNameInput) {
+  restaurantNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (scoutBtn) scoutBtn.click();
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Display Scout Results
@@ -84,62 +88,133 @@ restaurantNameInput.addEventListener("keydown", (e) => {
 function displayScoutResults(data) {
   const a = data.analysis;
 
-  // Score ring
+  // === HERO CARD ===
   const scoreRing = $("#safety-score-ring");
   scoreRing.textContent = a.safety_score;
   scoreRing.className = "score-ring " + getScoreClass(a.safety_score);
 
-  // Safety label
   const label = $("#safety-label");
   label.textContent = a.safety_label;
   label.className = "safety-label-badge " + getScoreClass(a.safety_score);
 
-  // Restaurant info
   $("#scout-restaurant-name").textContent = a.restaurant_name;
-  $("#scout-cuisine").textContent = a.cuisine_type;
+  $("#scout-cuisine").textContent = a.cuisine_type + (currentLocation ? " · " + currentLocation : "");
   $("#scout-summary").textContent = a.summary;
 
-  // Research summary
-  $("#research-summary").textContent = a.research_summary || "No research summary available.";
-
-  // Community sentiment
-  $("#community-sentiment").textContent = a.community_sentiment || "No celiac-specific community reviews found for this restaurant.";
-
-  // This restaurant: specific findings
+  // === WHY IT'S SAFE Section ===
   const specPositives = a.this_restaurant ? a.this_restaurant.specific_positives || [] : [];
-  populateStringList($("#specific-positives-list"), specPositives);
-  $("#specific-positives-count").textContent = specPositives.length;
-  toggleSection($("#specific-positives-section"), specPositives.length > 0);
+  const safetyIndicators = $("#safety-indicators");
+  const safetyList = $("#safety-indicators-list");
 
+  if (specPositives.length > 0) {
+    safetyList.innerHTML = "";
+    // Show up to 5 indicators
+    specPositives.slice(0, 5).forEach((text) => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      safetyList.appendChild(li);
+    });
+    show(safetyIndicators);
+  } else {
+    hide(safetyIndicators);
+  }
+
+  // === MENU HIGHLIGHTS Section ===
+  const menu = a.menu_analysis || { likely_safe: [], ask_first: [], red_flags: [] };
+  const menuHighlights = $("#menu-highlights");
+  const menuPills = $("#menu-pills");
+  const seeAllBtn = $("#see-all-menu-btn");
+
+  menuPills.innerHTML = "";
+  const safeItems = menu.likely_safe || [];
+
+  if (safeItems.length > 0) {
+    // Show up to 6 items as pills
+    const displayItems = safeItems.slice(0, 6);
+    displayItems.forEach((item) => {
+      const pill = document.createElement("span");
+      pill.className = "menu-pill";
+      pill.innerHTML = escapeHtml(item.item);
+      menuPills.appendChild(pill);
+    });
+
+    // Show "See all" if more than 6
+    if (safeItems.length > 6) {
+      seeAllBtn.textContent = `See all safe items (${safeItems.length})`;
+      show(seeAllBtn);
+    } else {
+      hide(seeAllBtn);
+    }
+
+    show(menuHighlights);
+  } else {
+    hide(menuHighlights);
+  }
+
+  // === THINGS TO KNOW Section (conditional) ===
   const specRisks = a.this_restaurant ? a.this_restaurant.specific_risks || [] : [];
-  populateStringList($("#specific-risks-list"), specRisks);
-  $("#specific-risks-count").textContent = specRisks.length;
-  toggleSection($("#specific-risks-section"), specRisks.length > 0);
+  const askItems = menu.ask_first || [];
+  const redFlags = menu.red_flags || [];
+  const thingsToKnow = $("#things-to-know");
+  const thingsToKnowList = $("#things-to-know-list");
 
-  // Staff knowledge badge
+  // Combine risks and notable items to ask about
+  const warnings = [...specRisks];
+  if (askItems.length > 0) {
+    warnings.push(`Ask about: ${askItems.slice(0, 3).map(i => i.item).join(", ")}`);
+  }
+  if (redFlags.length > 0) {
+    warnings.push(`Avoid: ${redFlags.slice(0, 2).map(i => i.item).join(", ")}`);
+  }
+
+  if (warnings.length > 0) {
+    thingsToKnowList.innerHTML = "";
+    warnings.slice(0, 4).forEach((text) => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      thingsToKnowList.appendChild(li);
+    });
+    show(thingsToKnow);
+  } else {
+    hide(thingsToKnow);
+  }
+
+  // === STAFF KNOWLEDGE ===
   const staffLevel = a.this_restaurant ? a.this_restaurant.staff_knowledge || "UNKNOWN" : "UNKNOWN";
+  const staffCard = $("#staff-knowledge-card");
   const staffBadge = $("#staff-knowledge-badge");
   staffBadge.textContent = staffLevel;
   staffBadge.className = "staff-badge staff-" + staffLevel.toLowerCase();
+  if (staffLevel !== "UNKNOWN") {
+    show(staffCard);
+  } else {
+    hide(staffCard);
+  }
 
-  // Menu analysis
-  const menu = a.menu_analysis || { likely_safe: [], ask_first: [], red_flags: [] };
+  // === EXPANDABLE SECTIONS ===
+
+  // Full Menu Analysis
   populateMenuList($("#likely-safe-list"), menu.likely_safe);
-  $("#safe-count").textContent = menu.likely_safe.length;
+  $("#safe-count").textContent = menu.likely_safe.length ? `(${menu.likely_safe.length})` : "";
 
   populateMenuList($("#ask-first-list"), menu.ask_first);
-  $("#ask-count").textContent = menu.ask_first.length;
+  $("#ask-count").textContent = menu.ask_first.length ? `(${menu.ask_first.length})` : "";
 
   populateMenuList($("#red-flags-list"), menu.red_flags);
-  $("#flags-count").textContent = menu.red_flags.length;
+  $("#flags-count").textContent = menu.red_flags.length ? `(${menu.red_flags.length})` : "";
 
-  // Cuisine context
+  // Full Analysis
+  $("#research-summary").textContent = a.research_summary || "No research summary available.";
+
   const cuisine = a.cuisine_context || { general_risks: [], general_positives: [] };
   populateStringList($("#cuisine-general-risks"), cuisine.general_risks);
   populateStringList($("#cuisine-general-positives"), cuisine.general_positives);
 
-  // Call script
-  $("#call-script-context").textContent = a.call_script_context;
+  // Community Reviews
+  $("#community-sentiment").textContent = a.community_sentiment || "No celiac-specific community reviews found for this restaurant.";
+
+  // Call Script
+  $("#call-script-context").textContent = a.call_script_context || "";
   renderCallScript(a.call_script || []);
 
   // Reset alternatives
@@ -321,16 +396,22 @@ function loadScriptPrefs(count) {
 // Questionnaire
 // ---------------------------------------------------------------------------
 
-$("#start-questionnaire-btn").addEventListener("click", () => {
-  hide(scoutResults);
-  renderQuestionnaire();
-  show(questionnaireView);
-});
+const startQuestionnaireBtn = $("#start-questionnaire-btn");
+if (startQuestionnaireBtn) {
+  startQuestionnaireBtn.addEventListener("click", () => {
+    hide(scoutResults);
+    renderQuestionnaire();
+    show(questionnaireView);
+  });
+}
 
-$("#back-to-results-btn").addEventListener("click", () => {
-  hide(questionnaireView);
-  show(scoutResults);
-});
+const backToResultsBtn = $("#back-to-results-btn");
+if (backToResultsBtn) {
+  backToResultsBtn.addEventListener("click", () => {
+    hide(questionnaireView);
+    show(scoutResults);
+  });
+}
 
 function renderQuestionnaire() {
   const container = $("#questionnaire-questions");
@@ -368,60 +449,63 @@ function renderQuestionnaire() {
   });
 }
 
-$("#submit-questionnaire-btn").addEventListener("click", async () => {
-  // Collect answers
-  const answers = {};
-  let allAnswered = true;
+const submitQuestionnaireBtn = $("#submit-questionnaire-btn");
+if (submitQuestionnaireBtn) {
+  submitQuestionnaireBtn.addEventListener("click", async () => {
+    // Collect answers
+    const answers = {};
+    let allAnswered = true;
 
-  questionnaireQuestions.forEach((q) => {
-    const selected = document.querySelector(
-      `.toggle-btn[data-question="${q.id}"].selected-yes, ` +
-      `.toggle-btn[data-question="${q.id}"].selected-no, ` +
-      `.toggle-btn[data-question="${q.id}"].selected-unsure`
-    );
-    if (selected) {
-      answers[q.text] = selected.dataset.answer;
-    } else {
-      allAnswered = false;
-    }
-  });
-
-  if (!allAnswered) {
-    alert("Please answer all questions before submitting.");
-    return;
-  }
-
-  hide(questionnaireView);
-  show(questionnaireLoading);
-
-  try {
-    const response = await fetch("/api/restaurant-scout/questionnaire", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        scout_id: currentScoutResult.id,
-        original_analysis: currentScoutResult.analysis,
-        answers: answers,
-      }),
+    questionnaireQuestions.forEach((q) => {
+      const selected = document.querySelector(
+        `.toggle-btn[data-question="${q.id}"].selected-yes, ` +
+        `.toggle-btn[data-question="${q.id}"].selected-no, ` +
+        `.toggle-btn[data-question="${q.id}"].selected-unsure`
+      );
+      if (selected) {
+        answers[q.text] = selected.dataset.answer;
+      } else {
+        allAnswered = false;
+      }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Assessment failed");
+    if (!allAnswered) {
+      alert("Please answer all questions before submitting.");
+      return;
     }
 
-    currentScoutResult.final_report = data.final_report;
-    displayFinalReport(data.final_report);
-  } catch (err) {
-    alert(err.message || "Something went wrong. Please try again.");
-    hide(questionnaireLoading);
-    show(questionnaireView);
-    return;
-  }
+    hide(questionnaireView);
+    show(questionnaireLoading);
 
-  hide(questionnaireLoading);
-});
+    try {
+      const response = await fetch("/api/restaurant-scout/questionnaire", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scout_id: currentScoutResult.id,
+          original_analysis: currentScoutResult.analysis,
+          answers: answers,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Assessment failed");
+      }
+
+      currentScoutResult.final_report = data.final_report;
+      displayFinalReport(data.final_report);
+    } catch (err) {
+      alert(err.message || "Something went wrong. Please try again.");
+      hide(questionnaireLoading);
+      show(questionnaireView);
+      return;
+    }
+
+    hide(questionnaireLoading);
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Final Report
@@ -482,46 +566,51 @@ function displayFinalReport(report) {
 
   // Reset save button
   const saveBtn = $("#save-restaurant-btn");
-  saveBtn.textContent = "Save to My Safe Restaurants";
-  saveBtn.classList.remove("saved");
-  saveBtn.disabled = false;
+  if (saveBtn) {
+    saveBtn.textContent = "Save to My Safe Restaurants";
+    saveBtn.classList.remove("saved");
+    saveBtn.disabled = false;
+  }
 
   show(finalReportView);
 }
 
 // ---------------------------------------------------------------------------
-// Save Restaurant
+// Save Restaurant (legacy handler - may be overridden below)
 // ---------------------------------------------------------------------------
 
-$("#save-restaurant-btn").addEventListener("click", async () => {
-  const btn = $("#save-restaurant-btn");
-  if (btn.classList.contains("saved")) return;
+const legacySaveBtn = $("#save-restaurant-btn");
+if (legacySaveBtn) {
+  legacySaveBtn.addEventListener("click", async () => {
+    const btn = $("#save-restaurant-btn");
+    if (!btn || btn.classList.contains("saved")) return;
 
-  try {
-    const response = await fetch("/api/restaurant-scout/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: currentScoutResult.id,
-        restaurant_name: currentScoutResult.restaurant_name,
-        analysis: currentScoutResult.analysis,
-        final_report: currentScoutResult.final_report,
-      }),
-    });
+    try {
+      const response = await fetch("/api/restaurant-scout/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: currentScoutResult.id,
+          restaurant_name: currentScoutResult.restaurant_name,
+          analysis: currentScoutResult.analysis,
+          final_report: currentScoutResult.final_report,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.error || "Save failed");
+      if (!response.ok) {
+        throw new Error(data.error || "Save failed");
+      }
+
+      btn.textContent = "Saved!";
+      btn.classList.add("saved");
+      btn.disabled = true;
+    } catch (err) {
+      alert(err.message || "Failed to save. Please try again.");
     }
-
-    btn.textContent = "Saved!";
-    btn.classList.add("saved");
-    btn.disabled = true;
-  } catch (err) {
-    alert(err.message || "Failed to save. Please try again.");
-  }
-});
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Sharing
@@ -529,7 +618,7 @@ $("#save-restaurant-btn").addEventListener("click", async () => {
 
 function generateShareText(data, isFinalReport) {
   const a = data.analysis;
-  let text = `GlutenGuard Report: ${a.restaurant_name} (${a.cuisine_type})`;
+  let text = `Celia Report: ${a.restaurant_name} (${a.cuisine_type})`;
 
   if (isFinalReport && data.final_report) {
     const r = data.final_report;
@@ -587,30 +676,40 @@ async function shareReport(text, feedbackEl) {
   setTimeout(() => hide(feedbackEl), 2500);
 }
 
-$("#share-results-btn").addEventListener("click", () => {
-  if (!currentScoutResult) return;
-  const text = generateShareText(currentScoutResult, false);
-  shareReport(text, $("#share-results-feedback"));
-});
+const shareResultsBtn = $("#share-results-btn");
+if (shareResultsBtn) {
+  shareResultsBtn.addEventListener("click", () => {
+    if (!currentScoutResult) return;
+    const text = generateShareText(currentScoutResult, false);
+    shareReport(text, $("#share-results-feedback"));
+  });
+}
 
-$("#share-final-btn").addEventListener("click", () => {
-  if (!currentScoutResult) return;
-  const text = generateShareText(currentScoutResult, true);
-  shareReport(text, $("#share-final-feedback"));
-});
+const shareFinalBtn = $("#share-final-btn");
+if (shareFinalBtn) {
+  shareFinalBtn.addEventListener("click", () => {
+    if (!currentScoutResult) return;
+    const text = generateShareText(currentScoutResult, true);
+    shareReport(text, $("#share-final-feedback"));
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Smart Alternatives
 // ---------------------------------------------------------------------------
 
-$("#find-alternatives-btn").addEventListener("click", () => {
-  if (!currentScoutResult) return;
-  const a = currentScoutResult.analysis;
-  const btn = $("#find-alternatives-btn");
-  btn.disabled = true;
-  btn.textContent = "Searching...";
-  fetchAlternatives(a.cuisine_type, currentLocation, a.restaurant_name);
-});
+const findAlternativesBtn = $("#find-alternatives-btn");
+if (findAlternativesBtn) {
+  findAlternativesBtn.addEventListener("click", () => {
+    if (!currentScoutResult) return;
+    const a = currentScoutResult.analysis;
+    const btn = $("#find-alternatives-btn");
+    if (!btn) return;
+    btn.disabled = true;
+    btn.textContent = "Searching...";
+    fetchAlternatives(a.cuisine_type, currentLocation, a.restaurant_name);
+  });
+}
 
 async function fetchAlternatives(cuisineType, location, originalName) {
   const altSection = $("#alternatives-section");
@@ -697,24 +796,41 @@ async function fetchAlternatives(cuisineType, location, originalName) {
 // ---------------------------------------------------------------------------
 
 function resetToSearch() {
-  restaurantNameInput.value = "";
-  menuUrlInput.value = "";
-  locationInput.value = "";
+  if (restaurantNameInput) restaurantNameInput.value = "";
+  if (menuUrlInput) menuUrlInput.value = "";
+  if (locationInput) locationInput.value = "";
   currentScoutResult = null;
   currentLocation = "";
   isCurrentRestaurantSaved = false;
-  hide(scoutResults);
-  hide(questionnaireView);
-  hide(questionnaireLoading);
-  hide(finalReportView);
-  hide(scoutLoading);
-  hide($("#alternatives-section"));
-  hide($("#find-alternatives-btn"));
-  show(searchView);
+  if (scoutResults) hide(scoutResults);
+  if (questionnaireView) hide(questionnaireView);
+  if (questionnaireLoading) hide(questionnaireLoading);
+  if (finalReportView) hide(finalReportView);
+  if (scoutLoading) hide(scoutLoading);
+  const altSection = $("#alternatives-section");
+  if (altSection) hide(altSection);
+  const findAltBtn = $("#find-alternatives-btn");
+  if (findAltBtn) hide(findAltBtn);
+  if (searchView) show(searchView);
 }
 
-$("#new-scout-btn").addEventListener("click", resetToSearch);
-$("#new-scout-final-btn").addEventListener("click", resetToSearch);
+const newScoutBtn = $("#new-scout-btn");
+if (newScoutBtn) newScoutBtn.addEventListener("click", resetToSearch);
+
+const newScoutFinalBtn = $("#new-scout-final-btn");
+if (newScoutFinalBtn) newScoutFinalBtn.addEventListener("click", resetToSearch);
+
+// "See all menu items" button opens the full menu section
+const seeAllMenuBtn = $("#see-all-menu-btn");
+if (seeAllMenuBtn) {
+  seeAllMenuBtn.addEventListener("click", () => {
+    const fullMenuSection = $("#full-menu-section");
+    if (fullMenuSection) {
+      fullMenuSection.open = true;
+      fullMenuSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Utilities
@@ -954,25 +1070,63 @@ if (shareReportBtn) {
 }
 
 // ---------------------------------------------------------------------------
-// URL Parameter Handling (for links from Discover page)
+// URL Parameter Handling (for links from My Safe Spots and Discover pages)
 // ---------------------------------------------------------------------------
 
-(function handleUrlParams() {
+function initFromUrlParams() {
+  console.log("[Scout] initFromUrlParams called");
+  console.log("[Scout] Current URL:", window.location.href);
+
   const params = new URLSearchParams(window.location.search);
   const name = params.get("name");
   const location = params.get("location");
 
+  console.log("[Scout] URL params - name:", name, "location:", location);
+  console.log("[Scout] restaurantNameInput element:", restaurantNameInput);
+  console.log("[Scout] locationInput element:", locationInput);
+  console.log("[Scout] scoutBtn element:", scoutBtn);
+
   if (name) {
-    restaurantNameInput.value = name;
-    if (location) {
-      locationInput.value = location;
+    console.log("[Scout] Name param found, setting up auto-search");
+
+    // Set form values
+    if (restaurantNameInput) {
+      restaurantNameInput.value = name;
+      console.log("[Scout] Set restaurant name input to:", name);
+    } else {
+      console.error("[Scout] ERROR: restaurantNameInput is null!");
+      return;
     }
+
+    if (location && locationInput) {
+      locationInput.value = location;
+      console.log("[Scout] Set location input to:", location);
+    }
+
     // Clear URL params without triggering reload
     window.history.replaceState({}, "", window.location.pathname);
+    console.log("[Scout] Cleared URL params");
 
-    // Auto-trigger search if both name and location provided
-    if (name && location) {
-      scoutBtn.click();
+    // Auto-trigger search
+    if (scoutBtn) {
+      console.log("[Scout] Triggering search in 150ms...");
+      setTimeout(() => {
+        console.log("[Scout] NOW triggering scoutBtn.click()");
+        scoutBtn.click();
+      }, 150);
+    } else {
+      console.error("[Scout] ERROR: scoutBtn is null!");
     }
+  } else {
+    console.log("[Scout] No name param in URL, skipping auto-search");
   }
-})();
+}
+
+// Run on DOMContentLoaded to ensure all elements are ready
+if (document.readyState === "loading") {
+  console.log("[Scout] Document still loading, adding DOMContentLoaded listener");
+  document.addEventListener("DOMContentLoaded", initFromUrlParams);
+} else {
+  console.log("[Scout] Document already loaded, running initFromUrlParams directly");
+  initFromUrlParams();
+}
