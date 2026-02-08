@@ -17,6 +17,49 @@ const locationInput = $("#scout-location");
 // State
 let currentScoutResult = null;
 let currentLocation = "";
+let loadingTimer = null;
+let stepInterval = null;
+let currentStep = 0;
+
+function startLoadingSteps() {
+  const steps = document.querySelectorAll(".loading-step");
+  const header = document.querySelector(".loading-header");
+  currentStep = 0;
+
+  // 500ms delay — cache hits resolve before this fires
+  loadingTimer = setTimeout(() => {
+    header.classList.add("visible");
+    steps[0].classList.add("active");
+
+    stepInterval = setInterval(() => {
+      currentStep++;
+      if (currentStep < steps.length) {
+        steps[currentStep - 1].classList.remove("active");
+        steps[currentStep - 1].classList.add("done");
+        steps[currentStep].classList.add("active");
+      } else {
+        clearInterval(stepInterval);
+        stepInterval = null;
+      }
+    }, 8000);
+  }, 500);
+}
+
+function stopLoadingSteps() {
+  if (loadingTimer) {
+    clearTimeout(loadingTimer);
+    loadingTimer = null;
+  }
+  if (stepInterval) {
+    clearInterval(stepInterval);
+    stepInterval = null;
+  }
+  // Reset for next search
+  document.querySelector(".loading-header").classList.remove("visible");
+  document.querySelectorAll(".loading-step").forEach((step) => {
+    step.classList.remove("active", "done");
+  });
+}
 
 // Questionnaire questions
 const questionnaireQuestions = [
@@ -46,6 +89,7 @@ if (scoutBtn) {
 
     hide(searchView);
     show(scoutLoading);
+    startLoadingSteps();
 
     try {
       const response = await fetch("/api/restaurant-scout", {
@@ -66,6 +110,7 @@ if (scoutBtn) {
       alert(err.message || "Something went wrong. Please try again.");
       resetToSearch();
     } finally {
+      stopLoadingSteps();
       hide(scoutLoading);
     }
   });
@@ -92,6 +137,10 @@ function displayScoutResults(data) {
   const scoreRing = $("#safety-score-ring");
   scoreRing.textContent = a.safety_score;
   scoreRing.className = "score-ring " + getScoreClass(a.safety_score);
+
+  const scoreLabel = $("#score-label");
+  scoreLabel.textContent = a.score_label || "";
+  scoreLabel.className = "score-label " + getScoreLabelColor(a.safety_score);
 
   const label = $("#safety-label");
   label.textContent = a.safety_label;
@@ -245,10 +294,18 @@ function toggleSection(el, visible) {
 }
 
 function getScoreClass(score) {
-  if (score >= 8) return "very-low-risk";
-  if (score >= 6) return "low-risk";
-  if (score >= 4) return "moderate-risk";
-  return "high-risk";
+  if (score >= 9) return "very-low-risk";
+  if (score >= 7) return "low-risk";
+  if (score >= 5) return "moderate-risk";
+  if (score >= 3) return "high-risk";
+  return "very-high-risk";
+}
+
+function getScoreLabelColor(score) {
+  if (score >= 9) return "label-green";
+  if (score >= 7) return "label-amber";
+  if (score >= 5) return "label-orange";
+  return "label-red";
 }
 
 function populateMenuList(ul, items) {

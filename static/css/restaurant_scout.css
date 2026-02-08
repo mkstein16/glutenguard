@@ -131,18 +131,84 @@
     transform: scale(1.02);
 }
 
+.score-ring.very-high-risk,
 .score-ring.high-risk {
     background: #ef4444;
 }
 
 .score-ring.moderate-risk {
-    background: #f59e0b;
+    background: #ea580c;
 }
 
-.score-ring.low-risk,
+.score-ring.low-risk {
+    background: #d97706;
+}
+
 .score-ring.very-low-risk {
     background: #10b981;
 }
+
+/* Score Column: stacks ring + label + explainer */
+.score-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Score Label (below score ring) */
+.score-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 6px;
+    line-height: 1.3;
+}
+.score-label.label-green { color: #10b981; }
+.score-label.label-amber { color: #d97706; }
+.score-label.label-orange { color: #ea580c; }
+.score-label.label-red { color: #ef4444; }
+
+/* Score Explainer (standalone section below hero card) */
+.score-explainer {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0 16px;
+    margin-bottom: 8px;
+}
+.score-explainer summary {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-align: center;
+    list-style: none;
+    padding: 10px 0;
+}
+.score-explainer summary::-webkit-details-marker { display: none; }
+.score-explainer-content {
+    padding-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.score-tier {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.tier-range {
+    font-weight: 700;
+    min-width: 28px;
+    flex-shrink: 0;
+}
+.tier-text { color: var(--text-secondary); }
+.tier-green { color: #10b981; }
+.tier-amber { color: #d97706; }
+.tier-orange { color: #ea580c; }
+.tier-red { color: #ef4444; }
 
 /* Safety Label Badge */
 .safety-label-badge {
@@ -155,17 +221,22 @@
     text-transform: uppercase;
 }
 
+.safety-label-badge.very-high-risk,
 .safety-label-badge.high-risk {
     background: var(--unsafe-bg);
     color: var(--unsafe);
 }
 
 .safety-label-badge.moderate-risk {
-    background: var(--warning-bg);
-    color: var(--warning);
+    background: #fff7ed;
+    color: #ea580c;
 }
 
-.safety-label-badge.low-risk,
+.safety-label-badge.low-risk {
+    background: #fffbeb;
+    color: #d97706;
+}
+
 .safety-label-badge.very-low-risk {
     background: var(--safe-bg);
     color: var(--safe);
@@ -819,6 +890,82 @@
 #alternatives-loading {
     text-align: center;
     padding: 12px 0;
+}
+
+/* ==========================================================================
+   LOADING STEPS (step-by-step progress for uncached searches)
+   ========================================================================== */
+
+.loading-header {
+    text-align: center;
+    margin-bottom: 24px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.loading-header.visible {
+    opacity: 1;
+}
+.loading-header-text {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.loading-steps {
+    max-width: 340px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.loading-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.loading-step.active,
+.loading-step.done {
+    opacity: 1;
+}
+
+.step-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.loading-step.active .step-indicator {
+    border: 2px solid var(--border);
+    border-top-color: #10b981;
+    animation: spin 0.8s linear infinite;
+}
+.loading-step.done .step-indicator {
+    border-color: #10b981;
+    background: #10b981;
+}
+.loading-step.done .step-indicator::after {
+    content: "\2713";
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.step-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+.loading-step.active .step-text {
+    color: var(--text);
+    font-weight: 500;
+}
+.loading-step.done .step-text {
+    color: var(--text-muted);
 }
 
 /* ==========================================================================

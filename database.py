@@ -48,8 +48,13 @@ def init_tables():
 
 
 def normalize_name(name):
-    """Normalize restaurant name for cache key: lowercase and strip whitespace."""
-    return " ".join(name.lower().split())
+    """Normalize restaurant name for cache key: lowercase, normalize '&'/'and',
+    strip punctuation, and collapse whitespace."""
+    name = name.lower()
+    name = name.replace('&', ' and ')
+    for ch in ".,'-":
+        name = name.replace(ch, '')
+    return " ".join(name.split())
 
 
 def normalize_location(location):

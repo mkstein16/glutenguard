@@ -43,9 +43,31 @@
 
             <!-- Section 2: Loading -->
             <div id="scout-loading" class="hidden">
-                <div class="loading-spinner"></div>
-                <p class="loading-text">Researching restaurant...</p>
-                <p class="loading-hint">Searching menus, reviews, and celiac community data</p>
+                <div class="loading-header">
+                    <p class="loading-header-text">This restaurant hasn't been searched yet — researching it now. Next time it'll be instant.</p>
+                </div>
+                <div class="loading-steps">
+                    <div class="loading-step" data-step="0">
+                        <span class="step-indicator"></span>
+                        <span class="step-text">Searching for restaurant website...</span>
+                    </div>
+                    <div class="loading-step" data-step="1">
+                        <span class="step-indicator"></span>
+                        <span class="step-text">Checking gluten-free reviews...</span>
+                    </div>
+                    <div class="loading-step" data-step="2">
+                        <span class="step-indicator"></span>
+                        <span class="step-text">Searching celiac community reviews...</span>
+                    </div>
+                    <div class="loading-step" data-step="3">
+                        <span class="step-indicator"></span>
+                        <span class="step-text">Analyzing menu and safety...</span>
+                    </div>
+                    <div class="loading-step" data-step="4">
+                        <span class="step-indicator"></span>
+                        <span class="step-text">Building your safety report...</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Section 3: Results -->
@@ -53,7 +75,10 @@
                 <!-- 1. HERO CARD -->
                 <div id="score-card" class="hero-card">
                     <div class="hero-top">
-                        <div id="safety-score-ring" class="score-ring"></div>
+                        <div class="score-column">
+                            <div id="safety-score-ring" class="score-ring"></div>
+                            <div id="score-label" class="score-label"></div>
+                        </div>
                         <div class="hero-info">
                             <h2 id="scout-restaurant-name"></h2>
                             <p id="scout-cuisine" class="cuisine-type"></p>
@@ -91,6 +116,18 @@
                         <span id="share-feedback" class="action-feedback hidden"></span>
                     </div>
                 </div>
+
+                <!-- SCORE EXPLAINER -->
+                <details class="score-explainer">
+                    <summary>What does this score mean?</summary>
+                    <div class="score-explainer-content">
+                        <div class="score-tier"><span class="tier-range tier-green">9-10</span><span class="tier-text"><strong>Go with confidence</strong> — Dedicated GF kitchen or certified. Very low risk.</span></div>
+                        <div class="score-tier"><span class="tier-range tier-amber">7-8</span><span class="tier-text"><strong>Safe with communication</strong> — Good GF options and protocols. Tell your server about celiac.</span></div>
+                        <div class="score-tier"><span class="tier-range tier-orange">5-6</span><span class="tier-text"><strong>Proceed with caution</strong> — GF options exist but cross-contamination risk is real. Ask questions.</span></div>
+                        <div class="score-tier"><span class="tier-range tier-red">3-4</span><span class="tier-text"><strong>High risk</strong> — Limited options, limited awareness. Eat here only as a last resort.</span></div>
+                        <div class="score-tier"><span class="tier-range tier-red">1-2</span><span class="tier-text"><strong>Avoid</strong> — Gluten is everywhere. Not worth the risk.</span></div>
+                    </div>
+                </details>
 
                 <!-- 2. WHY IT'S SAFE Section -->
                 <div id="safety-indicators" class="result-section safety-section hidden">

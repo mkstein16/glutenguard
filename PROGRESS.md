@@ -1,6 +1,6 @@
 # Celia - Project Status
 
-**Last Updated:** February 6, 2026 (late evening)
+**Last Updated:** February 7, 2026
 **Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/ (will move to askcelia.com)
 **Tech Stack:** Flask (Python) | HTML/CSS/JS (mobile-first) | Anthropic Claude API (Sonnet, vision + web search) | PostgreSQL on Render | JSON file storage (scan history only)
 
@@ -92,10 +92,10 @@ Tagline: "Your confident friend for dining out gluten-free"
 
 1. **Rate limits:** Main restaurant scout uses ~25k-28k tokens (web search results are huge). Alternatives push over 30k limit. Caching helps but first searches are still expensive.
 2. **Scan history not persistent:** JSON files wipe when Render free tier restarts. Restaurant searches now persist via PostgreSQL.
-3. **Restaurant analysis sometimes too generic:** Kalaya (dedicated GF restaurant) scored ~6 instead of 9+. Claude sometimes gives cuisine-generic advice instead of restaurant-specific intel.
-4. **Menu items sometimes fabricated:** Claude occasionally makes up menu items not on the actual restaurant's menu.
-5. **API costs high:** ~$0.25-0.40 per first restaurant search. Cached = $0.00. Discovery mode adds ~$0.10-0.15 per search.
-6. **First search is slow (~40 seconds):** Claude does 4 web searches per restaurant. Needs loading animation to manage perception. Cached searches are instant.
+3. ~~**Restaurant analysis sometimes too generic:** Kalaya (dedicated GF restaurant) scored ~6 instead of 9+. Claude sometimes gives cuisine-generic advice instead of restaurant-specific intel.~~ **Fixed Feb 7:** New 5-tier scoring rubric with hard rules (dedicated GF kitchen = min 9, certified = min 9) and instructions to not penalize for generic cuisine risks.
+4. **Menu items sometimes fabricated:** Claude occasionally makes up menu items not on the actual restaurant's menu. *(Feb 7: Prompt now explicitly instructs not to fabricate menu items or fill gaps with guesses.)*
+5. **API costs high:** ~$0.25-0.40 per first restaurant search. Cached = $0.00. Discovery mode adds ~$0.10-0.15 per search. *(Feb 7: Improved cache key normalization reduces duplicate searches — e.g. "P.S. & Co." and "PS and Co" now hit the same cache entry.)*
+6. ~~**First search is slow (~40 seconds):** Claude does 4 web searches per restaurant. Needs loading animation to manage perception. Cached searches are instant.~~ **Fixed Feb 7:** Step-by-step loading animation with timed progress messages. Cache hits skip animation entirely.
 7. **Discovery mode is basic:** Currently mostly proxies FMGF results. Becomes more valuable as database fills with cached safety scores.
 
 ---
@@ -104,13 +104,13 @@ Tagline: "Your confident friend for dining out gluten-free"
 
 Tasks that came up but aren't part of the main sprint:
 
-- [ ] Deploy latest code to Render (user accounts, share, save features)
+- [ ] Deploy latest code to Render (user accounts, share, save, scoring rubric, loading animation)
 - [x] Rebrand app from GlutenGuard → Celia (code, templates) ✅ Complete
 - [ ] Rename repo and Render URL to match Celia branding
 - [ ] Purchase askcelia.com domain
-- [ ] Post first Twitter content (blocked until rate limit clears)
-- [ ] Post intro discussion in r/Celiac
-- [ ] Add step-by-step loading animation for restaurant scout (timed progress messages during search)
+- [ ] Grab Twitter handle @celiaknows (rate limited, try again tomorrow)
+- [ ] Post intro discussion in r/Celiac (building presence first — day 5-7 target)
+- [x] Add step-by-step loading animation for restaurant scout (timed progress messages during search) ✅ Feb 7
 - [ ] Test re-enabling Smart Alternatives now that caching is live
 
 ---
@@ -178,8 +178,8 @@ Tasks that came up but aren't part of the main sprint:
 
 ### Week 2: Pre-Population + User Testing (Feb 12-18)
 - Pre-populate 50 restaurants (Philly local restaurants across cuisines, not just chains)
-- Add loading animation for first-time searches
-- Improve search quality and ranking
+- ~~Add loading animation for first-time searches~~ ✅ Done early (Feb 7)
+- ~~Improve search quality and ranking~~ ✅ Done early (Feb 7 — scoring rubric overhaul)
 - Onboarding flow
 - Share with 5-10 celiac beta testers
 - Fix issues from testing
@@ -313,3 +313,13 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
   - Session handling improved
 - 📋 UX is polished and ready for Week 2 (pre-population + user testing)
 - 📋 Ready to deploy to Render with updated design
+
+### Feb 7
+- ✅ Scoring rubric overhaul — 5-tier system with hard rules (dedicated GF kitchen = min 9, certified = min 9, gluten-friendly only = max 6), positive/negative signals, instructions to not penalize for generic cuisine risks, not fabricate menu items, not include citation tags
+- ✅ Score labels in UI — score_label displays under score circle with color coding, "What does this score mean?" expandable section
+- ✅ Tested with Fox & Sons (dedicated GF) — scored 10, "Go with confidence"
+- ✅ Improved cache key normalization — strips punctuation, normalizes &/and so variations hit same cache entry
+- ✅ Step-by-step loading animation for uncached searches — header explaining first-time search, 5 timed steps with spinner to checkmark, 500ms delay so cache hits skip it
+- ✅ 3 Reddit comments in r/Celiac (travel, university kitchen, newly diagnosed). Building presence before introducing Celia day 5-7.
+- 💡 Twitter handle will be @celiaknows (rate limited today)
+- 📋 Next session: Deploy to Render, then start pre-populating 50 Philly restaurants

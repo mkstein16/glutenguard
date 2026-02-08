@@ -114,6 +114,7 @@ After completing ALL searches above, analyze your findings. Follow these rules s
 - ONLY cite review sentiments that came from ACTUAL reviews you found. Do not fabricate review quotes or sentiments.
 - Separate restaurant-SPECIFIC findings (from reviews, website) from general CUISINE observations. For example: "Reviewers on FMGF mention the chef changes gloves" is specific. "Thai restaurants often use soy sauce" is cuisine context.
 - If a search returned no useful results, say so honestly. Do not fill gaps with guesses.
+- Do NOT include any citation tags, source references, or markup like <cite> in your response. Return plain text only in all JSON string fields.
 
 ## RESPONSE FORMAT
 
@@ -122,7 +123,8 @@ Respond with ONLY valid JSON in this exact format:
   "restaurant_name": "Exact official name of the restaurant",
   "cuisine_type": "Type of cuisine",
   "safety_score": 5,
-  "safety_label": "MODERATE RISK",
+  "safety_label": "Proceed with caution",
+  "score_label": "Proceed with caution",
   "summary": "2-3 sentence overview based on YOUR ACTUAL RESEARCH FINDINGS",
 
   "research_summary": "What you found: e.g. 'Found official menu on restaurant website. Found 23 reviews on Find Me Gluten Free (avg 4.1/5). Found 3 relevant Yelp reviews mentioning gluten-free experience. No dedicated GF menu found on website.'",
@@ -163,11 +165,57 @@ Respond with ONLY valid JSON in this exact format:
   "call_script_context": "Why these questions matter for THIS specific restaurant based on what you found"
 }}
 
-## SCORING RULES
-- safety_score: 0-10 (10 = safest). Most restaurants score 3-7. Be cautious.
-- safety_label: "VERY LOW RISK" (8-10), "LOW RISK" (6-7), "MODERATE RISK" (4-5), "HIGH RISK" (0-3)
+## SCORING RUBRIC
+
+Follow this rubric exactly when assigning safety_score.
+
+HARD RULES (these override all other signals):
+- Dedicated 100% gluten-free kitchen → minimum score of 9
+- Certified GF by GFFS, GFFP, GREAT Kitchens, or similar program → minimum score of 9
+- Restaurant explicitly states they cannot accommodate celiac → maximum score of 2
+- Zero GF options on the menu → maximum score of 3
+- Restaurant uses "gluten-friendly" but NOT "gluten-free" language → maximum score of 6
+- Chef/owner has celiac or personal connection to celiac → boost score by at least 1 point
+
+SCORE RANGES:
+9-10 "Go with confidence" — Dedicated GF kitchen or certified GF. Virtually no cross-contamination risk. Safe for even the most sensitive celiacs.
+7-8 "Safe with communication" — Clear GF menu, knowledgeable staff, good protocols like separate prep or dedicated fryers. Some risk exists but is actively managed. Tell your server about celiac.
+5-6 "Proceed with caution" — GF options exist but no dedicated prep area. Shared fryers, shared surfaces. Staff awareness is inconsistent. Ask lots of questions.
+3-4 "High risk" — Few or no marked GF options. Heavy flour/bread environment. Limited cross-contamination awareness. Only eat here as a last resort.
+1-2 "Avoid" — Gluten is fundamental to nearly everything. No options, no awareness, no accommodation possible.
+
+POSITIVE SIGNALS (push score higher):
+- Dedicated GF menu (not just items marked on regular menu)
+- Dedicated fryer for GF items
+- Staff trained on celiac/allergy protocols
+- Separate prep surfaces or GF prep area
+- Positive reviews specifically from celiac diners on FMGF or similar
+- Uses certified GF ingredients (GF soy sauce, tamari, GF pasta)
+- Strong FMGF rating with multiple celiac-specific reviews
+
+NEGATIVE SIGNALS (push score lower):
+- Shared fryers with gluten-containing items
+- Heavy flour/bread environment (bakery-cafes, pizzerias without dedicated GF oven)
+- "We can't guarantee" disclaimer with no explanation of actual protocols
+- No allergen info on website or menu
+- Negative reviews from celiac diners mentioning getting sick
+- Soy sauce throughout menu with no GF alternative mentioned
+
+CRITICAL SCORING INSTRUCTIONS:
+- Score based on what you find about THIS SPECIFIC restaurant. Do not penalize a restaurant for generic cuisine risks if they have addressed them. A Thai restaurant using tamari with a dedicated GF kitchen is a 9-10, not a 7 because "Thai food often has soy sauce."
+- A dedicated GF kitchen overrides ALL generic cuisine concerns.
 - If you found no real information about this restaurant, cap the score at 4 and note the lack of data.
-- call_script: 5-8 questions. Mark 3-5 as "essential" (most critical to ask) and the rest as "additional". Each question must be an object with "question" and "priority" fields. At least 2 essential questions should target specific findings from your research.
+- The safety_label and score_label MUST match the score range exactly.
+
+LABEL MAPPING:
+- safety_score 9-10 → safety_label: "VERY LOW RISK", score_label: "Go with confidence"
+- safety_score 7-8 → safety_label: "LOW RISK", score_label: "Safe with communication"
+- safety_score 5-6 → safety_label: "MODERATE RISK", score_label: "Proceed with caution"
+- safety_score 3-4 → safety_label: "HIGH RISK", score_label: "High risk"
+- safety_score 1-2 → safety_label: "VERY HIGH RISK", score_label: "Avoid"
+
+OTHER RULES:
+- call_script: 5-8 questions. Mark 3-5 as "essential" and the rest as "additional". At least 2 essential questions should target specific findings from your research.
 - menu_analysis: Only include items from the REAL menu. If menu not found, return empty arrays and explain in research_summary.
 
 Return ONLY valid JSON, no other text."""
