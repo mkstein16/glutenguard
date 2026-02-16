@@ -2,13 +2,15 @@ services:
   - type: web
     name: glutenguard
     runtime: python
-    plan: free
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: SECRET_KEY
+        sync: false
       - key: FLASK_ENV
         value: production
       - key: PYTHON_VERSION
-        value: "3.11.6"
+        value: "3.10.2"

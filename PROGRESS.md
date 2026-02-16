@@ -1,6 +1,6 @@
 # Celia - Project Status
 
-**Last Updated:** February 7, 2026
+**Last Updated:** February 11, 2026
 **Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/ (will move to askcelia.com)
 **Tech Stack:** Flask (Python) | HTML/CSS/JS (mobile-first) | Anthropic Claude API (Sonnet, vision + web search) | PostgreSQL on Render | JSON file storage (scan history only)
 
@@ -52,12 +52,14 @@ Tagline: "Your confident friend for dining out gluten-free"
 - Shows cached safety scores for any previously searched restaurants
 - "Get Full Report" button auto-triggers the full scout (which caches the result)
 - Currently a lightweight FMGF proxy — becomes more valuable as database grows with cached scores
+- Now uses claude-haiku-4-5 instead of Sonnet for ~5-7x cost reduction
 
-### 4. Smart Alternatives ❌ (disabled)
-- Built but disabled due to API rate limits (30k tokens/min)
+### 4. Smart Alternatives ✅ (re-enabled)
+- Re-enabled with cache awareness — alternatives endpoint checks cache for each result using get_cached_scores
+- When user clicks 'Scout This Restaurant' on an alternative and gets rate limited, gracefully falls back to 'Request This Restaurant' button instead of showing an error
+- Gets more useful as database grows with cached restaurants
 - When restaurant scores <7, searches for 3 nearby alternatives
 - "Find Better Options Nearby" button (user-triggered, not automatic)
-- Can likely re-enable now that caching is implemented — needs testing
 
 ### 5. Hub/Navigation ✅ (redesigned)
 - **New homepage layout:**
@@ -79,12 +81,21 @@ Tagline: "Your confident friend for dining out gluten-free"
 - Save state persists across sessions (PostgreSQL)
 
 ### 7. Database Infrastructure ✅
-- PostgreSQL on Render (free tier)
-- Tables: restaurants (caching), users (accounts), saved_restaurants (junction)
+- PostgreSQL on Render
+- Tables: restaurants (caching), users (accounts + search_count), saved_restaurants (junction), anonymous_usage (IP tracking), waitlist (Pro signups), restaurant_requests (async analysis queue)
 - schema.sql for version control + setup_db.py for initialization
 - External URL for local dev, Internal URL for production
 - Restaurant caching: normalized name+location key, 30-day TTL, ON CONFLICT upsert
 - Bulk cache lookup for discovery mode (get_cached_scores)
+
+### 8. Cost Protection & Growth Controls ✅
+- Free search limit: 5 uncached restaurant scout searches per user (cached searches don't count)
+- Anonymous users tracked by IP, signed-in users tracked by email
+- IP rate limiting: max 3 uncached searches per hour per IP (in-memory, resets on restart)
+- Waitlist signup: users who hit the limit can join Pro waitlist (saved to PostgreSQL)
+- Request a Restaurant: users can request specific restaurants for async analysis within 24 hours
+- fulfill_requests.py: batch script to process restaurant requests with 60-second delays
+- prepopulate.py: batch script to pre-cache restaurants from a hardcoded list
 
 ---
 
@@ -97,6 +108,8 @@ Tagline: "Your confident friend for dining out gluten-free"
 5. **API costs high:** ~$0.25-0.40 per first restaurant search. Cached = $0.00. Discovery mode adds ~$0.10-0.15 per search. *(Feb 7: Improved cache key normalization reduces duplicate searches — e.g. "P.S. & Co." and "PS and Co" now hit the same cache entry.)*
 6. ~~**First search is slow (~40 seconds):** Claude does 4 web searches per restaurant. Needs loading animation to manage perception. Cached searches are instant.~~ **Fixed Feb 7:** Step-by-step loading animation with timed progress messages. Cache hits skip animation entirely.
 7. **Discovery mode is basic:** Currently mostly proxies FMGF results. Becomes more valuable as database fills with cached safety scores.
+8. 8 is intentionally skipped to avoid renumbering.
+9. **Render free plan discontinued:** render.yaml updated to plan: starter. Also fixed Python version mismatch (3.11.6 → 3.10.2), added runtime.txt, unpinned psycopg2-binary version.
 
 ---
 
@@ -111,14 +124,21 @@ Tasks that came up but aren't part of the main sprint:
 - [ ] Grab Twitter handle @celiaknows (rate limited, try again tomorrow)
 - [ ] Post intro discussion in r/Celiac (building presence first — day 5-7 target)
 - [x] Add step-by-step loading animation for restaurant scout (timed progress messages during search) ✅ Feb 7
-- [ ] Test re-enabling Smart Alternatives now that caching is live
+- [x] Test re-enabling Smart Alternatives now that caching is live ✅ Feb 11
+- [ ] Deploy all Feb 11 changes to Render (search limits, waitlist, request feature, Haiku discovery, rate limiting, alternatives)
+- [ ] Verify prepopulate script completed (66 restaurants: 43 Philly + 20 national chains + 3 extras)
+- [ ] Purchase askcelia.com domain
+- [ ] Grab Twitter handle @celiaknows
+- [ ] Post intro/feedback request in r/Celiac (after deploy is live and pre-cache is confirmed)
+- [ ] Build onboarding flow (2-3 swipeable cards for new users)
+- [ ] Set SECRET_KEY environment variable in Render dashboard
 
 ---
 
 ## Architecture Notes
 
 - **API Key:** Stored in .env file, hidden via .gitignore, added as environment variable on Render
-- **Models:** Using claude-sonnet-4-20250514 for scout, alternatives, and discovery
+- **Models:** Using claude-sonnet-4-20250514 for scout and alternatives. Using claude-haiku-4-5-20250929 for discovery mode.
 - **Endpoints:**
   - `/` — Hub page (3 feature cards)
   - `/scan` — Label scanner
@@ -128,14 +148,18 @@ Tasks that came up but aren't part of the main sprint:
   - `/signout` — Sign out (redirects to hub)
   - `/my-safe-spots` — User's saved restaurants page
   - `/api/restaurant-scout` — POST, main restaurant analysis (with caching)
-  - `/api/restaurant-scout/alternatives` — POST, find alternatives (currently disabled)
+  - `/api/restaurant-scout/alternatives` — POST, find alternatives (cache-aware)
   - `/api/discover` — POST, discover restaurants by cuisine + location
   - `/api/save-restaurant` — POST, save restaurant to user's safe spots
   - `/api/unsave-restaurant` — POST, remove restaurant from safe spots
   - `/api/check-saved` — POST, check if restaurant is saved by user
+  - `/api/join-waitlist` — POST, save email to waitlist table
+  - `/api/request-restaurant` — POST, submit restaurant for async analysis
 - **max_tokens:** Main scout = 10,000. Alternatives = 2,000. Discovery = 2,000.
 - **Frontend:** Plain HTML/CSS/JS, no framework. Templates in `/templates/`. Mobile-first responsive.
 - **Caching:** PostgreSQL, keyed on normalized name+location, 30-day TTL, upsert on conflict
+- **Cost protection:** FREE_SEARCH_LIMIT = 5 (uncached searches only, cached are free). IP rate limit: 3 uncached searches/hour (in-memory dict).
+- **New tables:** anonymous_usage (IP tracking), waitlist (Pro signups), restaurant_requests (async queue)
 
 ---
 
@@ -152,6 +176,11 @@ Tasks that came up but aren't part of the main sprint:
 9. **Domain:** askcelia.com available (not purchased yet)
 10. **Discovery = lightweight first** — Returns list with brief notes + "Get Full Report" button, rather than full analysis of multiple restaurants at once. Cheaper, faster, funnels into cached scout.
 11. **Launch city-first (likely Philly)** — Pre-populate local restaurants instead of chains. Celiacs need help with local spots more than chains that publish allergen guides. Expand city by city.
+12. **Layered cost protection** — Cache → hourly IP rate limit → lifetime search limit → waitlist/request fallback. Every layer reduces exposure before opening to public.
+13. **Request a Restaurant as bridge** — Free users who hit the limit can still request restaurants for async analysis. Creates upgrade pressure for Pro (instant results) while keeping users engaged.
+14. **Haiku for lightweight tasks** — Discovery mode uses Haiku (5-7x cheaper) since it's just surfacing names, not doing deep analysis. Scout stays on Sonnet.
+15. **Pre-cache as marketing investment** — 66 restaurants pre-cached (43 Philly, 20 national chains) so first-time users get instant results. ~$15-20 one-time cost.
+16. **Free limit stays locked** — Joining waitlist does not reset the 5-search limit. Creates real upgrade pressure for Pro launch.
 
 ---
 
@@ -177,9 +206,11 @@ Tasks that came up but aren't part of the main sprint:
 - Deploy to Render (next step)
 
 ### Week 2: Pre-Population + User Testing (Feb 12-18)
-- Pre-populate 50 restaurants (Philly local restaurants across cuisines, not just chains)
+- 🔄 Pre-populating 66 restaurants (43 Philly + 20 national chains + 3 extras) — script running Feb 11
 - ~~Add loading animation for first-time searches~~ ✅ Done early (Feb 7)
 - ~~Improve search quality and ranking~~ ✅ Done early (Feb 7 — scoring rubric overhaul)
+- ✅ Cost protection system (search limits, rate limiting, waitlist, request feature) — Done early Feb 11
+- ✅ Smart Alternatives re-enabled with cache awareness — Feb 11
 - Onboarding flow
 - Share with 5-10 celiac beta testers
 - Fix issues from testing
@@ -217,7 +248,7 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 
 ## Future Features (Backlog)
 
-- **Smart alternatives** (re-enable after testing with caching)
+- ~~**Smart alternatives** (re-enable after testing with caching)~~ ✅ Re-enabled Feb 11
 - **Travel meal planner:** Pre-trip research, translation cards, airport/airline database
 - **AI phone calling:** Premium feature for pre-order verification
 - **Group dining mode:** "Suggest a Restaurant" text generator for group chats
@@ -229,7 +260,10 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 
 ## Business Model
 
-- **Free tier:** 10 restaurant searches/month + unlimited label scanning
+- **Free tier:** 5 uncached restaurant searches (lifetime) + unlimited label scanning + unlimited cached results
+  - After 5 searches: waitlist signup + request a restaurant (async, 24hr turnaround)
+  - Phase 1 (current): Free with soft limits + waitlist to validate demand
+  - Phase 2 (after 50+ waitlist emails): Add Stripe payments for Pro tier
 - **Pro tier ($7.99/month):** 100 searches + saved restaurants + alternatives + all features
 - **Future premium ($4.99 add-on):** AI calling credits
 - **Cost optimization:** Caching is critical. First search = ~$0.25-0.40. Cached = $0.00. Database grows over time, most searches become free.
@@ -323,3 +357,20 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 - ✅ 3 Reddit comments in r/Celiac (travel, university kitchen, newly diagnosed). Building presence before introducing Celia day 5-7.
 - 💡 Twitter handle will be @celiaknows (rate limited today)
 - 📋 Next session: Deploy to Render, then start pre-populating 50 Philly restaurants
+
+### Feb 11
+- ✅ Switched discovery mode to claude-haiku-4-5 (~5-7x cost reduction)
+- ✅ Free search limit system: 5 uncached searches per user (email for signed-in, IP for anonymous)
+- ✅ IP rate limiting: 3 uncached searches per hour per IP address
+- ✅ Waitlist signup for Pro tier (shown when user hits search limit)
+- ✅ Request a Restaurant feature (async analysis queue for limit-reached users)
+- ✅ fulfill_requests.py batch script for processing restaurant requests
+- ✅ prepopulate.py batch script for pre-caching restaurants
+- ✅ Smart Alternatives re-enabled with cache-aware scoring
+- ✅ Graceful fallback: rate-limited alternative scouts offer 'Request This Restaurant' instead of error
+- ✅ Cleared stale restaurant cache (pre-Feb 7 entries with old scoring rubric)
+- ✅ Database migration: added search_count column, anonymous_usage table, waitlist table, restaurant_requests table
+- ✅ Fixed Render deploy config: starter plan, Python 3.10.2, runtime.txt, unpinned psycopg2-binary
+- 🔄 Pre-populating 66 restaurants (43 Philly, 20 national chains, 3 extras) — script running overnight
+- 💡 Strategic decisions: layered cost protection before Reddit launch, free limit stays locked (no reset on waitlist join), Phase 1 = free + waitlist to validate demand before adding Stripe
+- 📋 Next session: verify prepopulate completed, commit all changes, deploy to Render, test live site

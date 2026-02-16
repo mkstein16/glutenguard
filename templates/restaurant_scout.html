@@ -41,6 +41,41 @@
                 </div>
             </div>
 
+            <!-- Section: Search Limit Reached -->
+            <div id="limit-reached-view" class="hidden">
+                <div class="limit-card">
+                    <div class="limit-icon">5</div>
+                    <h2>You've used all 5 free restaurant searches!</h2>
+                    <p class="limit-subtitle">Want more? Join our Pro waitlist.</p>
+
+                    <form id="waitlist-form" class="waitlist-form">
+                        <input type="email" id="waitlist-email" placeholder="you@email.com" required>
+                        <button type="submit" class="btn btn-primary btn-full">Join the Waitlist</button>
+                    </form>
+
+                    <div id="waitlist-success" class="waitlist-success hidden">
+                        <p>You're on the list! We'll let you know when Pro launches.</p>
+                    </div>
+
+                    <hr class="limit-divider">
+
+                    <p class="request-heading">Want a specific restaurant analyzed?</p>
+                    <p class="request-subtitle">Request it and we'll have your report ready within 24 hours.</p>
+
+                    <form id="request-restaurant-form" class="waitlist-form">
+                        <input type="text" id="request-restaurant-name" placeholder="Restaurant name" required>
+                        <input type="text" id="request-restaurant-location" placeholder="Location (optional)">
+                        <button type="submit" class="btn btn-primary btn-full">Request This Restaurant</button>
+                    </form>
+
+                    <div id="request-success" class="waitlist-success hidden">
+                        <p>Request received! We'll have your report ready within 24 hours.</p>
+                    </div>
+
+                    <button id="limit-back-btn" class="btn btn-secondary btn-full" disabled>Scout Another Restaurant</button>
+                </div>
+            </div>
+
             <!-- Section 2: Loading -->
             <div id="scout-loading" class="hidden">
                 <div class="loading-header">

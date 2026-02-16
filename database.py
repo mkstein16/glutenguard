@@ -348,6 +348,182 @@ def unsave_user_restaurant(user_id, restaurant_id):
         conn.close()
 
 
+def get_search_count(email):
+    """Get the search count for a signed-in user by email."""
+    conn = get_connection()
+    if conn is None:
+        return 0
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT search_count FROM users WHERE email = %s", (email.lower().strip(),))
+            row = cur.fetchone()
+            return row["search_count"] if row else 0
+    except Exception as e:
+        print(f"[DB] Error getting search count: {e}")
+        return 0
+    finally:
+        conn.close()
+
+
+def increment_search_count(email):
+    """Increment the search count for a signed-in user by email."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE users SET search_count = search_count + 1 WHERE email = %s",
+                    (email.lower().strip(),),
+                )
+        return True
+    except Exception as e:
+        print(f"[DB] Error incrementing search count: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def get_anonymous_search_count(ip_address):
+    """Get the search count for an anonymous user by IP address."""
+    conn = get_connection()
+    if conn is None:
+        return 0
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT search_count FROM anonymous_usage WHERE ip_address = %s", (ip_address,))
+            row = cur.fetchone()
+            return row["search_count"] if row else 0
+    except Exception as e:
+        print(f"[DB] Error getting anonymous search count: {e}")
+        return 0
+    finally:
+        conn.close()
+
+
+def increment_anonymous_search_count(ip_address):
+    """Increment the search count for an anonymous user by IP address (upsert)."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO anonymous_usage (ip_address, search_count, first_searched_at, last_searched_at)
+                    VALUES (%s, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ON CONFLICT (ip_address) DO UPDATE SET
+                        search_count = anonymous_usage.search_count + 1,
+                        last_searched_at = CURRENT_TIMESTAMP
+                    """,
+                    (ip_address,),
+                )
+        return True
+    except Exception as e:
+        print(f"[DB] Error incrementing anonymous search count: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def add_restaurant_request(name, location, email, ip):
+    """Save a restaurant request. Returns True if saved."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO restaurant_requests (restaurant_name, location, user_email, ip_address)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (name.strip(), location.strip() if location else None,
+                     email.lower().strip() if email else None, ip),
+                )
+        print(f"[DB] Restaurant request saved: {name} ({location})")
+        return True
+    except Exception as e:
+        print(f"[DB] Error saving restaurant request: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def get_pending_requests():
+    """Get all unfulfilled restaurant requests, oldest first."""
+    conn = get_connection()
+    if conn is None:
+        return []
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, restaurant_name, location, user_email, ip_address, requested_at
+                FROM restaurant_requests
+                WHERE fulfilled_at IS NULL
+                ORDER BY requested_at
+                """
+            )
+            return [dict(row) for row in cur.fetchall()]
+    except Exception as e:
+        print(f"[DB] Error getting pending requests: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def mark_request_fulfilled(request_id):
+    """Mark a restaurant request as fulfilled."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE restaurant_requests SET fulfilled_at = CURRENT_TIMESTAMP WHERE id = %s",
+                    (request_id,),
+                )
+        return True
+    except Exception as e:
+        print(f"[DB] Error marking request fulfilled: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def add_to_waitlist(email):
+    """Add an email to the Pro waitlist. Returns True if added, False on error/duplicate."""
+    conn = get_connection()
+    if conn is None:
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO waitlist (email) VALUES (%s) ON CONFLICT (email) DO NOTHING",
+                    (email.lower().strip(),),
+                )
+        return True
+    except Exception as e:
+        print(f"[DB] Error adding to waitlist: {e}")
+        return False
+    finally:
+        conn.close()
+
+
 def get_user_saved_restaurants(user_id):
     """Get all saved restaurants for a user. Returns list of restaurant dicts."""
     conn = get_connection()

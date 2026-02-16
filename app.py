@@ -308,6 +308,40 @@ Return ONLY valid JSON, no other text."""
 # Helpers
 # ---------------------------------------------------------------------------
 
+FREE_SEARCH_LIMIT = 5
+HOURLY_RATE_LIMIT = 3
+HOURLY_RATE_WINDOW = 3600  # seconds
+
+# In-memory store: IP -> list of timestamps
+_hourly_rate_log = {}
+
+
+def check_hourly_rate_limit(ip):
+    """Return True if the IP is within the hourly rate limit, False if exceeded."""
+    now = datetime.now().timestamp()
+    cutoff = now - HOURLY_RATE_WINDOW
+
+    timestamps = _hourly_rate_log.get(ip, [])
+    timestamps = [t for t in timestamps if t > cutoff]
+    _hourly_rate_log[ip] = timestamps
+
+    return len(timestamps) < HOURLY_RATE_LIMIT
+
+
+def record_hourly_rate_use(ip):
+    """Record a search timestamp for the given IP."""
+    now = datetime.now().timestamp()
+    _hourly_rate_log.setdefault(ip, []).append(now)
+
+
+def get_client_ip():
+    """Get client IP, respecting X-Forwarded-For behind Render's proxy."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr
+
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -648,6 +682,35 @@ def restaurant_scout_analyze():
         else:
             print(f"[SCOUT] CACHE MISS - Will perform web search for: {restaurant_name}")
 
+    # --- Hourly rate limit (per-IP, in-memory) ---
+    ip = get_client_ip()
+    if not check_hourly_rate_limit(ip):
+        print(f"[SCOUT] HOURLY RATE LIMIT hit for IP {ip}")
+        return jsonify({
+            "error": "Celia is doing a lot of research for you! Try again in an hour, or search a restaurant we already know about.",
+        }), 429
+
+    # --- Free search limit check (only on cache misses / fresh API calls) ---
+    if "user_id" in session:
+        user = get_user_by_id(session["user_id"])
+        if user:
+            count = get_search_count(user["email"])
+            print(f"[SCOUT] Signed-in user {user['email']} search count: {count}")
+            if count >= FREE_SEARCH_LIMIT:
+                return jsonify({
+                    "error": "You've used all 5 free restaurant searches!",
+                    "limit_reached": True,
+                }), 429
+    else:
+        ip = get_client_ip()
+        count = get_anonymous_search_count(ip)
+        print(f"[SCOUT] Anonymous user {ip} search count: {count}")
+        if count >= FREE_SEARCH_LIMIT:
+            return jsonify({
+                "error": "You've used all 5 free restaurant searches!",
+                "limit_reached": True,
+            }), 429
+
     url_context = ""
     url_search_instruction = ""
     if menu_url:
@@ -713,6 +776,16 @@ def restaurant_scout_analyze():
             "error": f"Analysis failed: {str(e)}",
             "debug": {"exception_type": type(e).__name__, "traceback": traceback.format_exc()},
         }), 500
+
+    # Increment search count after successful (uncached) API call
+    if "user_id" in session:
+        user = get_user_by_id(session["user_id"])
+        if user:
+            increment_search_count(user["email"])
+    else:
+        increment_anonymous_search_count(get_client_ip())
+
+    record_hourly_rate_use(ip)
 
     scout_id = str(uuid.uuid4())[:8]
     result = {
@@ -826,7 +899,18 @@ def restaurant_scout_alternatives():
 
         print(f"[SCOUT-ALT] Raw response (first 500 chars): {response_text[:500]}")
         result = parse_claude_json(response_text)
-        print(f"[SCOUT-ALT] Found {len(result.get('alternatives', []))} alternatives")
+        alternatives = result.get("alternatives", [])
+        print(f"[SCOUT-ALT] Found {len(alternatives)} alternatives")
+
+        # Attach cached scores where available
+        if alternatives:
+            names = [a["name"] for a in alternatives]
+            cached_scores = get_cached_scores(names, location)
+            for a in alternatives:
+                norm_name = " ".join(a["name"].lower().split())
+                if norm_name in cached_scores:
+                    a["cached_score"] = cached_scores[norm_name]
+
         return jsonify(result)
 
     except json.JSONDecodeError as e:
@@ -941,6 +1025,49 @@ def api_check_saved():
 
 
 # ---------------------------------------------------------------------------
+# Waitlist API
+# ---------------------------------------------------------------------------
+
+@app.route("/api/join-waitlist", methods=["POST"])
+def join_waitlist():
+    data = request.get_json()
+    email = (data.get("email", "") if data else "").strip()
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    if add_to_waitlist(email):
+        return jsonify({"success": True})
+    else:
+        return jsonify({"error": "Failed to join waitlist"}), 500
+
+
+# ---------------------------------------------------------------------------
+# Restaurant Request API
+# ---------------------------------------------------------------------------
+
+@app.route("/api/request-restaurant", methods=["POST"])
+def request_restaurant():
+    data = request.get_json()
+    name = (data.get("restaurant_name", "") if data else "").strip()
+    if not name:
+        return jsonify({"error": "Restaurant name is required"}), 400
+
+    location = (data.get("location", "") if data else "").strip()
+    email = None
+    if "user_id" in session:
+        user = get_user_by_id(session["user_id"])
+        if user:
+            email = user["email"]
+
+    ip = get_client_ip()
+
+    if add_restaurant_request(name, location, email, ip):
+        return jsonify({"success": True})
+    else:
+        return jsonify({"error": "Failed to save request"}), 500
+
+
+# ---------------------------------------------------------------------------
 # Discovery API
 # ---------------------------------------------------------------------------
 
@@ -995,7 +1122,7 @@ def discover_restaurants():
     try:
         print(f"[DISCOVER] Searching for {cuisine} restaurants in {location}")
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5-20250929",
             max_tokens=2000,
             tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
             messages=[{"role": "user", "content": prompt}],
@@ -1047,7 +1174,10 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 from database import (
     init_tables, get_cached_restaurant, cache_restaurant_result, get_cached_scores,
     get_or_create_user, get_user_by_id, get_restaurant_id, restaurant_exists,
-    save_user_restaurant, unsave_user_restaurant, is_restaurant_saved, get_user_saved_restaurants
+    save_user_restaurant, unsave_user_restaurant, is_restaurant_saved, get_user_saved_restaurants,
+    get_search_count, increment_search_count,
+    get_anonymous_search_count, increment_anonymous_search_count,
+    add_to_waitlist, add_restaurant_request, get_pending_requests,
 )
 init_tables()
 

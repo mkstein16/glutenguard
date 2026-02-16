@@ -19,6 +19,7 @@ CREATE INDEX idx_expires_at ON restaurants(expires_at);
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
+    search_count INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -31,3 +32,30 @@ CREATE TABLE saved_restaurants (
 );
 
 CREATE INDEX idx_user_saved ON saved_restaurants(user_id);
+
+-- Track search usage for anonymous (non-signed-in) users by IP
+CREATE TABLE anonymous_usage (
+    id SERIAL PRIMARY KEY,
+    ip_address VARCHAR(45) UNIQUE NOT NULL,
+    search_count INTEGER DEFAULT 0,
+    first_searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Restaurant requests from users who hit the search limit
+CREATE TABLE restaurant_requests (
+    id SERIAL PRIMARY KEY,
+    restaurant_name VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
+    user_email VARCHAR(255),
+    ip_address VARCHAR(45) NOT NULL,
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fulfilled_at TIMESTAMP
+);
+
+-- Pro waitlist signups
+CREATE TABLE waitlist (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    signed_up_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

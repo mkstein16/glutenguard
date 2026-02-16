@@ -20,6 +20,7 @@ let currentLocation = "";
 let loadingTimer = null;
 let stepInterval = null;
 let currentStep = 0;
+const limitReachedView = $("#limit-reached-view");
 
 function startLoadingSteps() {
   const steps = document.querySelectorAll(".loading-step");
@@ -101,6 +102,12 @@ if (scoutBtn) {
       const data = await response.json();
 
       if (!response.ok) {
+        if (data.limit_reached) {
+          stopLoadingSteps();
+          hide(scoutLoading);
+          showLimitReached();
+          return;
+        }
         throw new Error(data.error || "Scout failed");
       }
 
@@ -828,12 +835,57 @@ async function fetchAlternatives(cuisineType, location, originalName) {
         <button class="alt-scout-btn btn btn-secondary">Scout</button>
       `;
 
-      card.querySelector(".alt-scout-btn").addEventListener("click", () => {
-        restaurantNameInput.value = alt.name;
-        locationInput.value = location;
-        menuUrlInput.value = "";
-        hide(scoutResults);
-        scoutBtn.click();
+      card.querySelector(".alt-scout-btn").addEventListener("click", async () => {
+        const btn = card.querySelector(".alt-scout-btn");
+        btn.disabled = true;
+        btn.textContent = "Scouting...";
+
+        try {
+          const resp = await fetch("/api/restaurant-scout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ restaurant_name: alt.name, menu_url: "", location }),
+          });
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            // Rate limit or other error — offer to request instead
+            const info = card.querySelector(".alt-info");
+            info.innerHTML = `
+              <div class="alt-name">${escapeHtml(alt.name)}</div>
+              <p style="font-size:13px;color:var(--text-secondary);margin:6px 0;">
+                We can't scout this one right now. Want us to analyze it for you?
+              </p>
+            `;
+            btn.textContent = "Request This Restaurant";
+            btn.disabled = false;
+            btn.onclick = async () => {
+              btn.disabled = true;
+              btn.textContent = "Requesting...";
+              try {
+                await fetch("/api/request-restaurant", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ restaurant_name: alt.name, location }),
+                });
+                btn.textContent = "Requested!";
+              } catch (_) {
+                btn.textContent = "Failed — try again";
+                btn.disabled = false;
+              }
+            };
+            return;
+          }
+
+          // Success — navigate to full results
+          currentScoutResult = data;
+          currentLocation = location;
+          displayScoutResults(data);
+        } catch (err) {
+          btn.textContent = "Scout";
+          btn.disabled = false;
+          alert(err.message || "Something went wrong. Please try again.");
+        }
       });
 
       altList.appendChild(card);
@@ -1122,6 +1174,79 @@ if (shareReportBtn) {
         feedback.classList.remove("share-success");
         show(feedback);
       }
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Search Limit Reached
+// ---------------------------------------------------------------------------
+
+function showLimitReached() {
+  hide(searchView);
+  hide(scoutResults);
+  hide(questionnaireView);
+  hide(finalReportView);
+  show(limitReachedView);
+}
+
+const waitlistForm = $("#waitlist-form");
+if (waitlistForm) {
+  waitlistForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const emailInput = $("#waitlist-email");
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    try {
+      const response = await fetch("/api/join-waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to join waitlist");
+      }
+
+      hide(waitlistForm);
+      show($("#waitlist-success"));
+    } catch (err) {
+      alert(err.message || "Something went wrong. Please try again.");
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Restaurant Request Form
+// ---------------------------------------------------------------------------
+
+const requestForm = $("#request-restaurant-form");
+if (requestForm) {
+  requestForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = $("#request-restaurant-name").value.trim();
+    if (!name) return;
+
+    const location = $("#request-restaurant-location").value.trim();
+
+    try {
+      const response = await fetch("/api/request-restaurant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurant_name: name, location }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit request");
+      }
+
+      hide(requestForm);
+      show($("#request-success"));
+    } catch (err) {
+      alert(err.message || "Something went wrong. Please try again.");
     }
   });
 }
