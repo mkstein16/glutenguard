@@ -126,7 +126,7 @@ Tasks that came up but aren't part of the main sprint:
 - [x] Add step-by-step loading animation for restaurant scout (timed progress messages during search) ✅ Feb 7
 - [x] Test re-enabling Smart Alternatives now that caching is live ✅ Feb 11
 - [ ] Deploy all Feb 11 changes to Render (search limits, waitlist, request feature, Haiku discovery, rate limiting, alternatives)
-- [ ] Verify prepopulate script completed (66 restaurants: 43 Philly + 20 national chains + 3 extras)
+- [x] Verify prepopulate script completed (64 restaurants: 43 Philly + 20 national chains + 1 extra) ✅ Feb 11
 - [ ] Purchase askcelia.com domain
 - [ ] Grab Twitter handle @celiaknows
 - [ ] Post intro/feedback request in r/Celiac (after deploy is live and pre-cache is confirmed)
@@ -206,7 +206,7 @@ Tasks that came up but aren't part of the main sprint:
 - Deploy to Render (next step)
 
 ### Week 2: Pre-Population + User Testing (Feb 12-18)
-- 🔄 Pre-populating 66 restaurants (43 Philly + 20 national chains + 3 extras) — script running Feb 11
+- ✅ Pre-populated 64 restaurants (43 Philly + 20 national chains + 1 extra) — all cached successfully across 3 runs
 - ~~Add loading animation for first-time searches~~ ✅ Done early (Feb 7)
 - ~~Improve search quality and ranking~~ ✅ Done early (Feb 7 — scoring rubric overhaul)
 - ✅ Cost protection system (search limits, rate limiting, waitlist, request feature) — Done early Feb 11
@@ -371,6 +371,6 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 - ✅ Cleared stale restaurant cache (pre-Feb 7 entries with old scoring rubric)
 - ✅ Database migration: added search_count column, anonymous_usage table, waitlist table, restaurant_requests table
 - ✅ Fixed Render deploy config: starter plan, Python 3.10.2, runtime.txt, unpinned psycopg2-binary
-- 🔄 Pre-populating 66 restaurants (43 Philly, 20 national chains, 3 extras) — script running overnight
+- ✅ Pre-populated 64 restaurants (43 Philly + 20 national chains + 1 extra) — all cached successfully across 3 runs. 120-second delay needed between API calls to avoid rate limits.
 - 💡 Strategic decisions: layered cost protection before Reddit launch, free limit stays locked (no reset on waitlist join), Phase 1 = free + waitlist to validate demand before adding Stripe
 - 📋 Next session: verify prepopulate completed, commit all changes, deploy to Render, test live site
