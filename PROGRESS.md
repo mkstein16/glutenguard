@@ -1,7 +1,7 @@
 # Celia - Project Status
 
-**Last Updated:** February 11, 2026
-**Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/ (will move to askcelia.com)
+**Last Updated:** February 17, 2026
+**Repo:** GitHub (private) → Deployed on Render at https://glutenguard.onrender.com/ → askcelia.com (DNS connected, SSL pending)
 **Tech Stack:** Flask (Python) | HTML/CSS/JS (mobile-first) | Anthropic Claude API (Sonnet, vision + web search) | PostgreSQL on Render | JSON file storage (scan history only)
 
 ---
@@ -62,13 +62,14 @@ Tagline: "Your confident friend for dining out gluten-free"
 - "Find Better Options Nearby" button (user-triggered, not automatic)
 
 ### 5. Hub/Navigation ✅ (redesigned)
-- **New homepage layout:**
-  - Discover + Restaurant Scout as primary features (large cards with pastel icons)
-  - Label Scanner as secondary utility under "Quick Tools"
-  - Warm gradient background (peachy to cream)
+- **Search-first homepage:** Restaurant name + location search bar as primary action
+- Social proof line with dynamic restaurant count from database
+- Discover as secondary "Browse" card, Label Scanner under "Quick Tools"
+- **First-time visitor onboarding:** 3 swipeable cards, dot indicators, arrow navigation, Skip button, localStorage flag
 - **Bottom navigation bar:** Home, Saved, Account
 - **Account modal:** Bottom sheet with sign in/out
 - Back navigation between features
+- Warm gradient background (peachy to cream)
 - Inter font family + consistent design system
 - Mobile-first responsive styling
 
@@ -117,21 +118,22 @@ Tagline: "Your confident friend for dining out gluten-free"
 
 Tasks that came up but aren't part of the main sprint:
 
-- [ ] Deploy latest code to Render (user accounts, share, save, scoring rubric, loading animation)
+- [x] Deploy latest code to Render ✅ Feb 17
 - [x] Rebrand app from GlutenGuard → Celia (code, templates) ✅ Complete
 - [ ] Rename repo and Render URL to match Celia branding
-- [ ] Purchase askcelia.com domain
+- [x] Purchase askcelia.com domain ✅ Feb 17 (Squarespace, $20/year)
 - [ ] Grab Twitter handle @celiaknows (rate limited, try again tomorrow)
 - [ ] Post intro discussion in r/Celiac (building presence first — day 5-7 target)
 - [x] Add step-by-step loading animation for restaurant scout (timed progress messages during search) ✅ Feb 7
 - [x] Test re-enabling Smart Alternatives now that caching is live ✅ Feb 11
-- [ ] Deploy all Feb 11 changes to Render (search limits, waitlist, request feature, Haiku discovery, rate limiting, alternatives)
+- [x] Deploy all Feb 11 changes to Render ✅ Feb 17
 - [x] Verify prepopulate script completed (64 restaurants: 43 Philly + 20 national chains + 1 extra) ✅ Feb 11
-- [ ] Purchase askcelia.com domain
 - [ ] Grab Twitter handle @celiaknows
 - [ ] Post intro/feedback request in r/Celiac (after deploy is live and pre-cache is confirmed)
-- [ ] Build onboarding flow (2-3 swipeable cards for new users)
-- [ ] Set SECRET_KEY environment variable in Render dashboard
+- [x] Build onboarding flow (3 swipeable cards for new users) ✅ Feb 17
+- [x] Set SECRET_KEY environment variable in Render dashboard ✅ Feb 17
+- [ ] Verify askcelia.com is live with SSL
+- [ ] Smoke test live site end-to-end
 
 ---
 
@@ -173,7 +175,7 @@ Tasks that came up but aren't part of the main sprint:
 6. **Alternatives user-triggered** — Button click, not automatic (to manage API costs and rate limits)
 7. **Build in public** — Daily content on X/Twitter + Reddit for marketing and accountability
 8. **Rebranded to Celia** — character positioning as "your confident friend who always knows the safe spots." Celia voice on Twitter, developer voice on Reddit.
-9. **Domain:** askcelia.com available (not purchased yet)
+9. **Domain:** askcelia.com purchased (Squarespace, $20/year), connected to Render
 10. **Discovery = lightweight first** — Returns list with brief notes + "Get Full Report" button, rather than full analysis of multiple restaurants at once. Cheaper, faster, funnels into cached scout.
 11. **Launch city-first (likely Philly)** — Pre-populate local restaurants instead of chains. Celiacs need help with local spots more than chains that publish allergen guides. Expand city by city.
 12. **Layered cost protection** — Cache → hourly IP rate limit → lifetime search limit → waitlist/request fallback. Every layer reduces exposure before opening to public.
@@ -181,6 +183,8 @@ Tasks that came up but aren't part of the main sprint:
 14. **Haiku for lightweight tasks** — Discovery mode uses Haiku (5-7x cheaper) since it's just surfacing names, not doing deep analysis. Scout stays on Sonnet.
 15. **Pre-cache as marketing investment** — 66 restaurants pre-cached (43 Philly, 20 national chains) so first-time users get instant results. ~$15-20 one-time cost.
 16. **Free limit stays locked** — Joining waitlist does not reset the 5-search limit. Creates real upgrade pressure for Pro launch.
+17. **Homepage search-first** — Search bar directly on homepage so users can search without navigating to a separate page. Reduces taps to first action from 2 to 0.
+18. **Results page progressive disclosure** — Only score, Why It's Safe, and Things to Know shown by default. All other sections collapsed into expandable accordions. Reduces overwhelm while keeping depth accessible.
 
 ---
 
@@ -211,14 +215,14 @@ Tasks that came up but aren't part of the main sprint:
 - ~~Improve search quality and ranking~~ ✅ Done early (Feb 7 — scoring rubric overhaul)
 - ✅ Cost protection system (search limits, rate limiting, waitlist, request feature) — Done early Feb 11
 - ✅ Smart Alternatives re-enabled with cache awareness — Feb 11
-- Onboarding flow
+- ✅ Onboarding flow — 3 swipeable cards, Feb 17
 - Share with 5-10 celiac beta testers
 - Fix issues from testing
 
 ### Week 3: Accounts & Limits (Feb 19-25)
+- ✅ Search limits + waitlist + request feature — Done early Feb 11
 - Proper auth (Firebase/Supabase)
-- Usage limits (free: 10 searches/month)
-- Pricing page + Stripe integration ($7.99/month Pro)
+- Stripe integration ($7.99/month Pro)
 - Polish and prep for launch
 
 ### Week 4: Launch & Iterate (Feb 26 - Mar 2)
@@ -374,3 +378,22 @@ Weekly cadence: Mon=building update, Tue=celiac education, Wed=product teaser, T
 - ✅ Pre-populated 64 restaurants (43 Philly + 20 national chains + 1 extra) — all cached successfully across 3 runs. 120-second delay needed between API calls to avoid rate limits.
 - 💡 Strategic decisions: layered cost protection before Reddit launch, free limit stays locked (no reset on waitlist join), Phase 1 = free + waitlist to validate demand before adding Stripe
 - 📋 Next session: verify prepopulate completed, commit all changes, deploy to Render, test live site
+
+### Feb 17
+- ✅ Cleaned up duplicate restaurant cache entries (removed 1 duplicate, 67 restaurants remain)
+- ✅ Verified Vedge (4/10) and Moonbowls (4/10) scores are justified — no scoring rubric changes needed
+- ✅ Built first-time visitor onboarding overlay (3 swipeable cards, localStorage flag, Skip button, arrow navigation, full-screen dark backdrop)
+- ✅ Redesigned homepage — search bar front and center as primary action, Discover and Label Scanner as secondary/tertiary cards, social proof line with dynamic restaurant count from database
+- ✅ Collapsed restaurant results page — only score card, Why It's Safe, and Things to Know shown by default, all other sections (Menu Highlights, Staff Knowledge, Call Script, Full Menu Analysis, Full Analysis, Community Reviews) collapsed into expandable accordions
+- ✅ Deprioritized 'I Called — Answer Follow-up Questions' button (moved below collapsible sections, secondary style)
+- ✅ Save/unsave button simplified to toggle pattern ('Saved ✓' / 'Save')
+- ✅ Dynamic restaurant count on homepage (pulls from database, updates automatically)
+- ✅ Title case applied to restaurant names in display
+- ✅ Removed /reset-onboarding test route
+- ✅ Fixed flash of search form on scout page when arriving with query params
+- ✅ Upgraded Render to Starter plan ($7/month)
+- ✅ Set SECRET_KEY environment variable on Render
+- ✅ Purchased askcelia.com domain (Squarespace, $20/year)
+- ✅ Connected askcelia.com to Render (DNS verified, SSL certificate pending)
+- ✅ Deployed all changes to Render (auto-deploy from git push)
+- 📋 Next session: verify askcelia.com is live with SSL, smoke test the live site, plan beta testing and Reddit launch
