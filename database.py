@@ -64,6 +64,21 @@ def normalize_location(location):
     return " ".join(location.lower().split())
 
 
+def get_restaurant_count():
+    """Return the total number of cached restaurants."""
+    conn = get_connection()
+    if conn is None:
+        return 0
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) AS cnt FROM restaurants")
+        return cur.fetchone()["cnt"]
+    except Exception:
+        return 0
+    finally:
+        conn.close()
+
+
 def get_cached_restaurant(name, location):
     """Look up a cached restaurant result. Returns a dict with 'restaurant_id' (database ID)
     and 'data' (the analysis JSON) if found and not expired (< 30 days old), otherwise None."""

@@ -416,7 +416,8 @@ def hub():
     user = None
     if "user_id" in session:
         user = get_user_by_id(session["user_id"])
-    return render_template("hub.html", user=user)
+    restaurant_count = get_restaurant_count()
+    return render_template("hub.html", user=user, restaurant_count=restaurant_count)
 
 
 @app.route("/scan")
@@ -1178,6 +1179,7 @@ from database import (
     get_search_count, increment_search_count,
     get_anonymous_search_count, increment_anonymous_search_count,
     add_to_waitlist, add_restaurant_request, get_pending_requests,
+    get_restaurant_count,
 )
 init_tables()
 

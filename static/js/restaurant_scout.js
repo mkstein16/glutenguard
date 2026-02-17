@@ -1,6 +1,7 @@
 const $ = (sel) => document.querySelector(sel);
 const show = (el) => { if (el) el.classList.remove("hidden"); };
 const hide = (el) => { if (el) el.classList.add("hidden"); };
+const titleCase = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
 // Elements
 const restaurantNameInput = $("#restaurant-name");
@@ -153,7 +154,7 @@ function displayScoutResults(data) {
   label.textContent = a.safety_label;
   label.className = "safety-label-badge " + getScoreClass(a.safety_score);
 
-  $("#scout-restaurant-name").textContent = a.restaurant_name;
+  $("#scout-restaurant-name").textContent = titleCase(a.restaurant_name);
   $("#scout-cuisine").textContent = a.cuisine_type + (currentLocation ? " · " + currentLocation : "");
   $("#scout-summary").textContent = a.summary;
 
@@ -236,11 +237,23 @@ function displayScoutResults(data) {
   }
 
   // === STAFF KNOWLEDGE ===
-  const staffLevel = a.this_restaurant ? a.this_restaurant.staff_knowledge || "UNKNOWN" : "UNKNOWN";
+  const staffRaw = a.this_restaurant ? a.this_restaurant.staff_knowledge || "UNKNOWN" : "UNKNOWN";
+  // staff_knowledge can be a long string like "LOW - explanation here" or just "HIGH"
+  const staffDash = staffRaw.indexOf(" - ");
+  const staffLevel = staffDash > -1 ? staffRaw.substring(0, staffDash).trim() : staffRaw.trim();
+  const staffExplanation = staffDash > -1 ? staffRaw.substring(staffDash + 3).trim() : "";
   const staffCard = $("#staff-knowledge-card");
   const staffBadge = $("#staff-knowledge-badge");
+  const staffDetail = $("#staff-knowledge-detail");
   staffBadge.textContent = staffLevel;
   staffBadge.className = "staff-badge staff-" + staffLevel.toLowerCase();
+  if (staffDetail) {
+    staffDetail.textContent = staffExplanation || {
+      "HIGH": "Staff are well-trained on celiac/gluten-free needs and can guide you through the menu.",
+      "MODERATE": "Staff have some awareness of gluten-free needs but may need prompting on specifics.",
+      "LOW": "Staff have limited knowledge of gluten-free requirements. Be prepared to ask detailed questions.",
+    }[staffLevel] || "";
+  }
   if (staffLevel !== "UNKNOWN") {
     show(staffCard);
   } else {
@@ -682,7 +695,7 @@ if (legacySaveBtn) {
 
 function generateShareText(data, isFinalReport) {
   const a = data.analysis;
-  let text = `Celia Report: ${a.restaurant_name} (${a.cuisine_type})`;
+  let text = `Celia Report: ${titleCase(a.restaurant_name)} (${a.cuisine_type})`;
 
   if (isFinalReport && data.final_report) {
     const r = data.final_report;
@@ -828,7 +841,7 @@ async function fetchAlternatives(cuisineType, location, originalName) {
           ${alt.estimated_safety_score}
         </div>
         <div class="alt-info">
-          <div class="alt-name">${escapeHtml(alt.name)}</div>
+          <div class="alt-name">${escapeHtml(titleCase(alt.name))}</div>
           <div class="alt-cuisine">${escapeHtml(alt.cuisine || "")}${alt.location_note ? " \u00b7 " + escapeHtml(alt.location_note) : ""}</div>
           <div class="alt-reason">${escapeHtml(alt.brief_reason)}</div>
         </div>
@@ -852,7 +865,7 @@ async function fetchAlternatives(cuisineType, location, originalName) {
             // Rate limit or other error — offer to request instead
             const info = card.querySelector(".alt-info");
             info.innerHTML = `
-              <div class="alt-name">${escapeHtml(alt.name)}</div>
+              <div class="alt-name">${escapeHtml(titleCase(alt.name))}</div>
               <p style="font-size:13px;color:var(--text-secondary);margin:6px 0;">
                 We can't scout this one right now. Want us to analyze it for you?
               </p>
@@ -996,12 +1009,13 @@ function updateSaveButtonState(btn) {
 
   btn.disabled = false;
 
+  const bookmarkSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
   if (isCurrentRestaurantSaved) {
-    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg> Remove from Safe Spots';
+    btn.innerHTML = bookmarkSvg + ' <span>Saved ✓</span>';
     btn.classList.add("saved");
     btn.classList.add("unsave-mode");
   } else {
-    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save to My Safe Spots';
+    btn.innerHTML = bookmarkSvg + ' <span>Save</span>';
     btn.classList.remove("saved");
     btn.classList.remove("unsave-mode");
   }
@@ -1111,7 +1125,7 @@ if (shareReportBtn) {
     const analysis = currentScoutResult.analysis;
     // Use the original search term for cache-friendly URLs, fall back to Claude's name
     const searchName = currentScoutResult.restaurant_name || analysis.restaurant_name;
-    const displayName = analysis.restaurant_name; // For display purposes
+    const displayName = titleCase(analysis.restaurant_name);
     const safetyScore = analysis.safety_score;
     const safetyLabel = analysis.safety_label;
 
@@ -1270,6 +1284,12 @@ function initFromUrlParams() {
 
   if (name) {
     console.log("[Scout] Name param found, setting up auto-search");
+
+    // Replace inline display:none (from template) with class-based hiding
+    if (searchView) {
+      searchView.style.display = "";
+      hide(searchView);
+    }
 
     // Set form values
     if (restaurantNameInput) {

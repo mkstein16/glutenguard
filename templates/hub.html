@@ -14,124 +14,84 @@
             margin: 0 auto;
         }
 
-        /* Welcome Section */
-        .hub-welcome {
-            text-align: center;
-            margin-bottom: var(--space-2xl);
-            padding: var(--space-lg) 0;
-        }
-
-        .hub-welcome h2 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: var(--space-sm);
-            color: var(--text);
-            letter-spacing: -0.02em;
-        }
-
-        .hub-welcome p {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        /* Primary Cards */
-        .primary-cards {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-lg);
-            margin-bottom: var(--space-2xl);
-        }
-
-        .primary-card {
-            display: block;
+        /* Hero Search Section */
+        .hero-search {
             background: white;
             border-radius: var(--radius);
-            padding: 28px;
-            text-decoration: none;
-            color: inherit;
-            transition: all var(--transition);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--space-xl);
         }
 
-        .primary-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-            transform: translateY(-2px);
-        }
-
-        .primary-card:active {
-            transform: translateY(0);
-        }
-
-        .primary-card-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-lg);
-            margin-bottom: var(--space-md);
-        }
-
-        .primary-card-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .primary-card-icon svg {
-            width: 32px;
-            height: 32px;
-        }
-
-        .primary-card-icon.discover {
-            background: #dbeafe;
-            color: #2563eb;
-        }
-
-        .primary-card-icon.scout {
-            background: #fed7aa;
-            color: #ea580c;
-        }
-
-        .primary-card-title {
-            font-size: 22px;
+        .hero-search h2 {
+            font-size: 24px;
             font-weight: 700;
             color: var(--text);
-            letter-spacing: -0.01em;
+            letter-spacing: -0.02em;
+            margin-bottom: var(--space-xs);
+            text-align: center;
         }
 
-        .primary-card-desc {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: var(--space-lg);
-        }
-
-        .primary-card-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-sm);
+        .hero-search .hero-subtitle {
             font-size: 15px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: var(--space-xl);
+            line-height: 1.5;
+        }
+
+        .hero-search input {
+            width: 100%;
+            padding: var(--space-md) var(--space-lg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--bg);
+            transition: all var(--transition-fast);
+            min-height: 48px;
+        }
+
+        .hero-search input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .hero-search input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .hero-search input + input {
+            margin-top: var(--space-md);
+        }
+
+        .hero-search .btn {
+            margin-top: var(--space-lg);
+        }
+
+        /* Social Proof */
+        .social-proof {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-2xl);
+            line-height: 1.5;
+        }
+
+        /* Browse Section */
+        .browse-section {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .browse-section-heading {
+            font-size: 13px;
             font-weight: 600;
-            color: #2563eb;
-        }
-
-        .primary-card.scout-card .primary-card-cta {
-            color: #ea580c;
-        }
-
-        .primary-card-cta svg {
-            width: 20px;
-            height: 20px;
-            transition: transform var(--transition-fast);
-        }
-
-        .primary-card:hover .primary-card-cta svg {
-            transform: translateX(4px);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: var(--space-md);
         }
 
         /* Separator */
@@ -196,13 +156,21 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            background: #d1fae5;
-            color: #059669;
         }
 
         .secondary-card-icon svg {
             width: 24px;
             height: 24px;
+        }
+
+        .secondary-card-icon.discover {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .secondary-card-icon.scanner {
+            background: #d1fae5;
+            color: #059669;
         }
 
         .secondary-card-info {
@@ -231,9 +199,276 @@
         .secondary-card:hover .secondary-card-arrow {
             transform: translateX(2px);
         }
+        /* Onboarding Overlay */
+        body.onboarding-active {
+            overflow: hidden;
+        }
+
+        body.onboarding-active header,
+        body.onboarding-active .bottom-nav {
+            display: none !important;
+        }
+
+        .onboarding-overlay {
+            position: fixed;
+            inset: 0;
+            background: #1a1a2e;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-xl);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            touch-action: none;
+        }
+
+        .onboarding-overlay.visible {
+            opacity: 1;
+        }
+
+        .onboarding-overlay.hidden {
+            display: none;
+        }
+
+        .onboarding-skip {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 15px;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--space-sm) var(--space-md);
+            font-family: inherit;
+        }
+
+        .onboarding-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: var(--space-3xl) var(--space-2xl) var(--space-2xl);
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .onboarding-slides {
+            display: flex;
+            transition: transform 0.35s ease;
+        }
+
+        .onboarding-slide {
+            min-width: 100%;
+            padding: 0 var(--space-sm);
+        }
+
+        .onboarding-slide h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: var(--space-lg);
+            letter-spacing: -0.02em;
+        }
+
+        .onboarding-slide p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .onboarding-steps {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            text-align: left;
+            margin-top: var(--space-sm);
+        }
+
+        .onboarding-step {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            font-size: 16px;
+            color: var(--text);
+            line-height: 1.4;
+        }
+
+        .onboarding-step-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+            width: 36px;
+            text-align: center;
+        }
+
+        .onboarding-step-arrow {
+            display: flex;
+            justify-content: center;
+            padding-left: 36px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .onboarding-cta {
+            display: inline-block;
+            width: 100%;
+            padding: var(--space-lg) var(--space-xl);
+            background: var(--primary);
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: var(--space-xl);
+            transition: background var(--transition-fast);
+        }
+
+        .onboarding-cta:hover {
+            background: var(--primary-hover);
+        }
+
+        .onboarding-dots {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-sm);
+            margin-top: var(--space-xl);
+        }
+
+        .onboarding-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: var(--radius-full);
+            background: var(--border);
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .onboarding-dot.active {
+            background: var(--primary);
+            width: 24px;
+        }
+
+        .onboarding-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-lg);
+            margin-top: var(--space-xl);
+        }
+
+        .onboarding-nav-arrow {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: inherit;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .onboarding-nav-arrow:hover {
+            background: var(--bg-secondary);
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .onboarding-nav-arrow:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .onboarding-nav-arrow:disabled:hover {
+            background: white;
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+
+        .onboarding-nav-arrow svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .onboarding-stat {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-top: var(--space-sm);
+        }
+
+        .onboarding-stat strong {
+            color: var(--primary);
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
+    <!-- Onboarding Overlay (outside #app so it covers everything) -->
+    <div class="onboarding-overlay hidden" id="onboarding-overlay">
+        <button class="onboarding-skip" id="onboarding-skip">Skip</button>
+        <div class="onboarding-card">
+            <div style="overflow: hidden;">
+                <div class="onboarding-slides" id="onboarding-slides">
+                    <div class="onboarding-slide">
+                        <h2>Meet Celia 👋</h2>
+                        <p>Your celiac safety companion. Search any restaurant and get an instant safety score based on real celiac community experiences — not just the restaurant's claims.</p>
+                    </div>
+                    <div class="onboarding-slide">
+                        <h2>How it works</h2>
+                        <div class="onboarding-steps">
+                            <div class="onboarding-step">
+                                <span class="onboarding-step-icon">🔍</span>
+                                <span>Search a restaurant</span>
+                            </div>
+                            <div class="onboarding-step-arrow">↓</div>
+                            <div class="onboarding-step">
+                                <span class="onboarding-step-icon">📊</span>
+                                <span>Get a celiac safety score (1-10)</span>
+                            </div>
+                            <div class="onboarding-step-arrow">↓</div>
+                            <div class="onboarding-step">
+                                <span class="onboarding-step-icon">💾</span>
+                                <span>Save your safe spots</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="onboarding-slide">
+                        <h2>Ready to eat safely?</h2>
+                        <p class="onboarding-stat"><strong>{{ restaurant_count }} restaurants</strong> already scored in Philadelphia</p>
+                        <button class="onboarding-cta" id="onboarding-start">Get Started</button>
+                    </div>
+                </div>
+            </div>
+            <div class="onboarding-nav">
+                <button class="onboarding-nav-arrow" id="onboarding-prev" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="onboarding-dots" id="onboarding-dots">
+                    <button class="onboarding-dot active" data-slide="0"></button>
+                    <button class="onboarding-dot" data-slide="1"></button>
+                    <button class="onboarding-dot" data-slide="2"></button>
+                </div>
+                <button class="onboarding-nav-arrow" id="onboarding-next">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="app">
         <header>
             <div class="header-content">
@@ -243,44 +478,37 @@
         </header>
 
         <main class="hub-main">
-            <div class="hub-welcome">
+            <!-- Hero Search -->
+            <form class="hero-search" id="hero-search-form">
                 <h2>Where do you want to eat?</h2>
-                <p>Find safe restaurants, check menus, dine with confidence</p>
-            </div>
+                <p class="hero-subtitle">Search any restaurant and get a celiac safety score</p>
+                <input type="text" id="hero-name" placeholder="Search a restaurant..." required>
+                <input type="text" id="hero-location" placeholder="City or neighborhood (optional)">
+                <button type="submit" class="btn btn-primary btn-full">Scout This Restaurant</button>
+            </form>
 
-            <!-- Primary Features -->
-            <div class="primary-cards">
-                <a href="/discover" class="primary-card discover-card">
-                    <div class="primary-card-header">
-                        <div class="primary-card-icon discover">
+            <!-- Social Proof -->
+            <p class="social-proof">{{ restaurant_count }}+ restaurants scored · Based on real celiac community reviews</p>
+
+            <!-- Browse Section -->
+            <div class="browse-section">
+                <p class="browse-section-heading">Or browse by cuisine</p>
+                <div class="secondary-cards">
+                    <a href="/discover" class="secondary-card">
+                        <div class="secondary-card-icon discover">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                             </svg>
                         </div>
-                        <span class="primary-card-title">Discover</span>
-                    </div>
-                    <p class="primary-card-desc">Browse restaurants by cuisine and location</p>
-                    <span class="primary-card-cta">
-                        Browse Restaurants
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                    </span>
-                </a>
-
-                <a href="/restaurant-scout" class="primary-card scout-card">
-                    <div class="primary-card-header">
-                        <div class="primary-card-icon scout">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                            </svg>
+                        <div class="secondary-card-info">
+                            <h3>Discover</h3>
+                            <p>Browse restaurants by cuisine and location</p>
                         </div>
-                        <span class="primary-card-title">Restaurant Scout</span>
-                    </div>
-                    <p class="primary-card-desc">Research a specific restaurant before you go</p>
-                    <span class="primary-card-cta">
-                        Search Restaurant
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                    </span>
-                </a>
+                        <div class="secondary-card-arrow">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                        </div>
+                    </a>
+                </div>
             </div>
 
             <!-- Separator -->
@@ -291,7 +519,7 @@
             <!-- Secondary Features -->
             <div class="secondary-cards">
                 <a href="/scan" class="secondary-card">
-                    <div class="secondary-card-icon">
+                    <div class="secondary-card-icon scanner">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
                         </svg>
@@ -375,6 +603,73 @@
                 accountModal.classList.remove('visible');
             }
         });
+
+        // Hero search form — redirect to restaurant scout
+        document.getElementById('hero-search-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('hero-name').value.trim();
+            if (!name) return;
+            const location = document.getElementById('hero-location').value.trim();
+            const params = new URLSearchParams({ name });
+            if (location) params.set('location', location);
+            window.location.href = '/restaurant-scout?' + params.toString();
+        });
+
+        // Onboarding
+        (function() {
+            if (localStorage.getItem('celia_onboarding_seen')) return;
+
+            const overlay = document.getElementById('onboarding-overlay');
+            const slides = document.getElementById('onboarding-slides');
+            const dots = document.querySelectorAll('.onboarding-dot');
+            const prevBtn = document.getElementById('onboarding-prev');
+            const nextBtn = document.getElementById('onboarding-next');
+            let current = 0;
+            const total = 3;
+
+            // Lock body scroll and hide bottom nav
+            document.body.classList.add('onboarding-active');
+            overlay.classList.remove('hidden');
+            requestAnimationFrame(() => overlay.classList.add('visible'));
+
+            // Prevent background scroll on touch
+            overlay.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+            function goTo(index) {
+                current = Math.max(0, Math.min(index, total - 1));
+                slides.style.transform = `translateX(-${current * 100}%)`;
+                dots.forEach((d, i) => d.classList.toggle('active', i === current));
+                prevBtn.disabled = current === 0;
+                nextBtn.disabled = current === total - 1;
+            }
+
+            function dismiss() {
+                localStorage.setItem('celia_onboarding_seen', '1');
+                document.body.classList.remove('onboarding-active');
+                overlay.classList.remove('visible');
+                setTimeout(() => overlay.classList.add('hidden'), 400);
+            }
+
+            // Dot clicks
+            dots.forEach(d => d.addEventListener('click', () => goTo(parseInt(d.dataset.slide))));
+
+            // Arrow clicks
+            prevBtn.addEventListener('click', () => goTo(current - 1));
+            nextBtn.addEventListener('click', () => goTo(current + 1));
+
+            // Skip + Get Started
+            document.getElementById('onboarding-skip').addEventListener('click', dismiss);
+            document.getElementById('onboarding-start').addEventListener('click', dismiss);
+
+            // Swipe support
+            let startX = 0;
+            const card = overlay.querySelector('.onboarding-card');
+            card.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+            card.addEventListener('touchend', (e) => {
+                const dx = e.changedTouches[0].clientX - startX;
+                if (Math.abs(dx) > 50) goTo(current + (dx < 0 ? 1 : -1));
+            });
+        })();
     </script>
 </body>
 </html>

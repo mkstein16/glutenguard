@@ -27,6 +27,12 @@
         <main>
             <!-- Section 1: Search -->
             <div id="search-view">
+                <script>
+                    // Hide search form immediately if URL has name param (prevents flash)
+                    if (new URLSearchParams(window.location.search).get("name")) {
+                        document.getElementById("search-view").style.display = "none";
+                    }
+                </script>
                 <div class="search-form">
                     <label for="restaurant-name">Restaurant Name</label>
                     <input type="text" id="restaurant-name" placeholder="e.g. Olive Garden, Chipotle..." autocomplete="off">
@@ -173,17 +179,7 @@
                     <ul id="safety-indicators-list" class="indicator-list"></ul>
                 </div>
 
-                <!-- 3. MENU HIGHLIGHTS Section -->
-                <div id="menu-highlights" class="result-section menu-section hidden">
-                    <h3 class="section-title">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                        Menu Highlights
-                    </h3>
-                    <div id="menu-pills" class="menu-pills"></div>
-                    <button id="see-all-menu-btn" class="btn-link hidden">See all safe items</button>
-                </div>
-
-                <!-- 4. THINGS TO KNOW Section (conditional) -->
+                <!-- 3. THINGS TO KNOW Section (conditional) -->
                 <div id="things-to-know" class="result-section warning-section hidden">
                     <h3 class="section-title">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -192,17 +188,37 @@
                     <ul id="things-to-know-list" class="warning-list"></ul>
                 </div>
 
-                <!-- Staff Knowledge Badge (inline) -->
-                <div id="staff-knowledge-card" class="staff-knowledge-inline hidden">
-                    <span class="staff-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </span>
-                    <span class="staff-label">Staff Knowledge:</span>
-                    <span id="staff-knowledge-badge" class="staff-badge"></span>
-                </div>
-
-                <!-- 5. EXPANDABLE SECTIONS -->
+                <!-- 4. EXPANDABLE SECTIONS -->
                 <div class="expandable-sections">
+                    <!-- Menu Highlights -->
+                    <details class="expand-section hidden" id="menu-highlights">
+                        <summary class="expand-header">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                            Menu Highlights
+                            <span class="expand-chevron">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="expand-content">
+                            <div id="menu-pills" class="menu-pills"></div>
+                            <button id="see-all-menu-btn" class="btn-link hidden">See all safe items</button>
+                        </div>
+                    </details>
+
+                    <!-- Staff Knowledge -->
+                    <details class="expand-section hidden" id="staff-knowledge-card">
+                        <summary class="expand-header">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            Staff Knowledge: <span id="staff-knowledge-badge" class="staff-badge"></span>
+                            <span class="expand-chevron">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="expand-content">
+                            <p id="staff-knowledge-detail" class="staff-detail"></p>
+                        </div>
+                    </details>
+
                     <!-- Call Script -->
                     <details class="expand-section" id="call-script-section">
                         <summary class="expand-header">
@@ -305,7 +321,7 @@
                         </div>
                     </div>
 
-                    <button id="start-questionnaire-btn" class="btn btn-primary btn-full">I Called — Answer Follow-up Questions</button>
+                    <button id="start-questionnaire-btn" class="btn btn-secondary btn-full">I Called — Answer Follow-up Questions</button>
                     <button id="new-scout-btn" class="btn btn-secondary btn-full">Scout Another Restaurant</button>
                 </div>
             </div>

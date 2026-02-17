@@ -205,7 +205,7 @@
                             {{ r.safety_score }}
                         </div>
                         <div class="saved-info">
-                            <div class="saved-name">{{ r.name }}</div>
+                            <div class="saved-name">{{ r.name|title }}</div>
                             <div class="saved-location">{{ r.location }}</div>
                             <span class="saved-label {{ 'very-low-risk' if r.safety_score >= 8 else 'low-risk' if r.safety_score >= 6 else 'moderate-risk' if r.safety_score >= 4 else 'high-risk' }}">
                                 {{ 'Very Low Risk' if r.safety_score >= 8 else 'Low Risk' if r.safety_score >= 6 else 'Moderate Risk' if r.safety_score >= 4 else 'High Risk' }}
