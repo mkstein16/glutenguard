@@ -483,7 +483,8 @@
                 <h2>Where do you want to eat?</h2>
                 <p class="hero-subtitle">Search any restaurant and get a celiac safety score</p>
                 <input type="text" id="hero-name" placeholder="Search a restaurant..." required>
-                <input type="text" id="hero-location" placeholder="City or neighborhood (optional)">
+                <input type="text" id="hero-location" placeholder="City or neighborhood">
+                <p class="input-helper">Helps find the right location — especially for common restaurant names</p>
                 <button type="submit" class="btn btn-primary btn-full">Scout This Restaurant</button>
                 {% if searches_remaining > 0 %}
                 <p class="search-counter">{{ searches_remaining }} of 5 free searches remaining</p>
@@ -609,12 +610,20 @@
             }
         });
 
+        // Pre-fill location from localStorage
+        const heroLocationInput = document.getElementById('hero-location');
+        const savedLocation = localStorage.getItem('celia_last_location');
+        if (savedLocation && heroLocationInput) {
+            heroLocationInput.value = savedLocation;
+        }
+
         // Hero search form — redirect to restaurant scout
         document.getElementById('hero-search-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('hero-name').value.trim();
             if (!name) return;
-            const location = document.getElementById('hero-location').value.trim();
+            const location = heroLocationInput.value.trim();
+            if (location) localStorage.setItem('celia_last_location', location);
             const params = new URLSearchParams({ name });
             if (location) params.set('location', location);
             window.location.href = '/restaurant-scout?' + params.toString();

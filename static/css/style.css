@@ -290,6 +290,12 @@ main {
     margin-top: var(--space-xl);
 }
 
+.input-helper {
+    font-size: 0.75rem;
+    color: #999;
+    margin: 0.25rem 0 0 0;
+}
+
 .search-counter {
     text-align: center;
     font-size: 0.8rem;

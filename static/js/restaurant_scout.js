@@ -10,10 +10,13 @@ const scoutBtn = $("#scout-btn");
 const searchView = $("#search-view");
 const scoutLoading = $("#scout-loading");
 const scoutResults = $("#scout-results");
-const questionnaireView = $("#questionnaire-view");
-const questionnaireLoading = $("#questionnaire-loading");
-const finalReportView = $("#final-report-view");
 const locationInput = $("#scout-location");
+
+// Pre-fill location from localStorage
+const savedLocation = localStorage.getItem("celia_last_location");
+if (savedLocation && locationInput && !locationInput.value) {
+  locationInput.value = savedLocation;
+}
 
 // State
 let currentScoutResult = null;
@@ -63,17 +66,6 @@ function stopLoadingSteps() {
   });
 }
 
-// Questionnaire questions
-const questionnaireQuestions = [
-  { id: "knows_celiac", text: "Did they know what celiac disease is?" },
-  { id: "dedicated_fryer", text: "Do they have a dedicated gluten-free fryer?" },
-  { id: "change_gloves", text: "Will they change gloves for your order?" },
-  { id: "separate_prep", text: "Do they have a separate prep area or clean surfaces?" },
-  { id: "confident_answers", text: "Did the staff seem confident and knowledgeable?" },
-  { id: "gf_menu", text: "Do they have a gluten-free menu or marked items?" },
-  { id: "willing_to_accommodate", text: "Were they willing to make modifications?" },
-];
-
 // ---------------------------------------------------------------------------
 // Scout Search
 // ---------------------------------------------------------------------------
@@ -88,6 +80,7 @@ if (scoutBtn) {
 
     const menuUrl = menuUrlInput ? menuUrlInput.value.trim() : "";
     currentLocation = locationInput ? locationInput.value.trim() : "";
+    if (currentLocation) localStorage.setItem("celia_last_location", currentLocation);
 
     hide(searchView);
     show(scoutLoading);
@@ -149,6 +142,17 @@ function displayScoutResults(data) {
   const scoreLabel = $("#score-label");
   scoreLabel.textContent = a.score_label || "";
   scoreLabel.className = "score-label " + getScoreLabelColor(a.safety_score);
+
+  // Score context line
+  const scoreContext = $("#score-context");
+  if (scoreContext) {
+    const s = a.safety_score || 0;
+    if (s >= 9) scoreContext.textContent = "Safe for nearly all celiacs \u2014 dedicated or certified kitchen";
+    else if (s >= 7) scoreContext.textContent = "Safe for most celiacs with standard precautions";
+    else if (s >= 5) scoreContext.textContent = "May be workable but requires careful communication";
+    else if (s >= 3) scoreContext.textContent = "Significant cross-contamination risks present";
+    else scoreContext.textContent = "Not recommended for celiac diners";
+  }
 
   const label = $("#safety-label");
   label.textContent = a.score_label || "";
@@ -296,6 +300,10 @@ function displayScoutResults(data) {
   $("#community-sentiment").textContent = a.community_sentiment || "No celiac-specific community reviews found for this restaurant.";
 
   // Call Script
+  const callHeading = $("#call-script-heading");
+  if (callHeading) {
+    callHeading.textContent = "What to Ask " + titleCase(a.restaurant_name);
+  }
   $("#call-script-context").textContent = a.call_script_context || "";
   renderCallScript(a.call_script || []);
 
@@ -483,189 +491,6 @@ function loadScriptPrefs(count) {
 }
 
 // ---------------------------------------------------------------------------
-// Questionnaire
-// ---------------------------------------------------------------------------
-
-const startQuestionnaireBtn = $("#start-questionnaire-btn");
-if (startQuestionnaireBtn) {
-  startQuestionnaireBtn.addEventListener("click", () => {
-    hide(scoutResults);
-    renderQuestionnaire();
-    show(questionnaireView);
-  });
-}
-
-const backToResultsBtn = $("#back-to-results-btn");
-if (backToResultsBtn) {
-  backToResultsBtn.addEventListener("click", () => {
-    hide(questionnaireView);
-    show(scoutResults);
-  });
-}
-
-function renderQuestionnaire() {
-  const container = $("#questionnaire-questions");
-  container.innerHTML = "";
-
-  questionnaireQuestions.forEach((q) => {
-    const row = document.createElement("div");
-    row.className = "question-row";
-    row.innerHTML = `
-      <div class="question-text">${escapeHtml(q.text)}</div>
-      <div class="question-toggles">
-        <button class="toggle-btn" data-question="${q.id}" data-answer="Yes">Yes</button>
-        <button class="toggle-btn" data-question="${q.id}" data-answer="No">No</button>
-        <button class="toggle-btn" data-question="${q.id}" data-answer="Unsure">Unsure</button>
-      </div>
-    `;
-    container.appendChild(row);
-  });
-
-  // Toggle button click handlers
-  container.addEventListener("click", (e) => {
-    const btn = e.target.closest(".toggle-btn");
-    if (!btn) return;
-
-    const questionId = btn.dataset.question;
-    const siblings = container.querySelectorAll(`[data-question="${questionId}"]`);
-    siblings.forEach((s) => {
-      s.className = "toggle-btn";
-    });
-
-    const answer = btn.dataset.answer;
-    if (answer === "Yes") btn.classList.add("selected-yes");
-    else if (answer === "No") btn.classList.add("selected-no");
-    else btn.classList.add("selected-unsure");
-  });
-}
-
-const submitQuestionnaireBtn = $("#submit-questionnaire-btn");
-if (submitQuestionnaireBtn) {
-  submitQuestionnaireBtn.addEventListener("click", async () => {
-    // Collect answers
-    const answers = {};
-    let allAnswered = true;
-
-    questionnaireQuestions.forEach((q) => {
-      const selected = document.querySelector(
-        `.toggle-btn[data-question="${q.id}"].selected-yes, ` +
-        `.toggle-btn[data-question="${q.id}"].selected-no, ` +
-        `.toggle-btn[data-question="${q.id}"].selected-unsure`
-      );
-      if (selected) {
-        answers[q.text] = selected.dataset.answer;
-      } else {
-        allAnswered = false;
-      }
-    });
-
-    if (!allAnswered) {
-      alert("Please answer all questions before submitting.");
-      return;
-    }
-
-    hide(questionnaireView);
-    show(questionnaireLoading);
-
-    try {
-      const response = await fetch("/api/restaurant-scout/questionnaire", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scout_id: currentScoutResult.id,
-          original_analysis: currentScoutResult.analysis,
-          answers: answers,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Assessment failed");
-      }
-
-      currentScoutResult.final_report = data.final_report;
-      displayFinalReport(data.final_report);
-    } catch (err) {
-      alert(err.message || "Something went wrong. Please try again.");
-      hide(questionnaireLoading);
-      show(questionnaireView);
-      return;
-    }
-
-    hide(questionnaireLoading);
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Final Report
-// ---------------------------------------------------------------------------
-
-function displayFinalReport(report) {
-  // Score ring
-  const ring = $("#final-score-ring");
-  ring.textContent = report.adjusted_score;
-  ring.className = "score-ring " + getScoreClass(report.adjusted_score);
-
-  // Label
-  const label = $("#final-label");
-  label.textContent = report.adjusted_label;
-  label.className = "safety-label-badge " + getScoreClass(report.adjusted_score);
-
-  // Score change
-  const changeEl = $("#score-change-indicator");
-  const change = report.score_change;
-  if (change > 0) {
-    changeEl.textContent = `+${change} from initial score`;
-    changeEl.className = "positive";
-  } else if (change < 0) {
-    changeEl.textContent = `${change} from initial score`;
-    changeEl.className = "negative";
-  } else {
-    changeEl.textContent = "No change from initial score";
-    changeEl.className = "neutral";
-  }
-
-  // Recommendation
-  const recBadge = $("#recommendation-badge");
-  recBadge.textContent = report.recommendation;
-  const recClass = report.recommendation === "GO" ? "go"
-    : report.recommendation === "NO-GO" ? "no-go"
-    : "caution";
-  recBadge.className = recClass;
-
-  $("#recommendation-detail").textContent = report.recommendation_detail;
-
-  // Score reasoning
-  $("#score-reasoning").textContent = report.score_reasoning;
-
-  // Safe to order
-  populateStringList($("#safe-to-order-list"), report.safe_to_order);
-  $("#safe-order-count").textContent = (report.safe_to_order || []).length;
-
-  // Items to avoid
-  populateStringList($("#items-to-avoid-list"), report.items_to_avoid);
-  $("#avoid-count").textContent = (report.items_to_avoid || []).length;
-
-  // Dining tips
-  populateStringList($("#dining-tips-list"), report.dining_tips);
-  $("#tips-count").textContent = (report.dining_tips || []).length;
-
-  // Final summary
-  $("#final-summary").textContent = report.final_summary;
-
-  // Reset save button
-  const saveBtn = $("#save-restaurant-btn");
-  if (saveBtn) {
-    saveBtn.textContent = "Save to My Safe Restaurants";
-    saveBtn.classList.remove("saved");
-    saveBtn.disabled = false;
-  }
-
-  show(finalReportView);
-}
-
-// ---------------------------------------------------------------------------
 // Save Restaurant (legacy handler - may be overridden below)
 // ---------------------------------------------------------------------------
 
@@ -706,35 +531,21 @@ if (legacySaveBtn) {
 // Sharing
 // ---------------------------------------------------------------------------
 
-function generateShareText(data, isFinalReport) {
+function generateShareText(data) {
   const a = data.analysis;
   let text = `Celia Report: ${titleCase(a.restaurant_name)} (${a.cuisine_type})`;
-
-  if (isFinalReport && data.final_report) {
-    const r = data.final_report;
-    text += ` - Safety Score: ${r.adjusted_score}/10 ${r.adjusted_label}.`;
-    text += ` ${r.recommendation}: ${r.recommendation_detail}`;
-    if (r.safe_to_order?.length) {
-      text += ` Safe to order: ${r.safe_to_order.join(", ")}.`;
-    }
-    if (r.items_to_avoid?.length) {
-      text += ` Avoid: ${r.items_to_avoid.join(", ")}.`;
-    }
-  } else {
-    text += ` - Safety Score: ${a.safety_score}/10 ${a.score_label}.`;
-    text += ` ${a.summary}`;
-    const menu = a.menu_analysis || {};
-    if (menu.likely_safe?.length) {
-      text += ` Menu highlights: ${menu.likely_safe.map((i) => i.item).join(", ")}.`;
-    }
-    if (menu.ask_first?.length) {
-      text += ` Ask about: ${menu.ask_first.map((i) => i.item).join(", ")}.`;
-    }
-    if (menu.red_flags?.length) {
-      text += ` Avoid: ${menu.red_flags.map((i) => i.item).join(", ")}.`;
-    }
+  text += ` - Safety Score: ${a.safety_score}/10 ${a.score_label}.`;
+  text += ` ${a.summary}`;
+  const menu = a.menu_analysis || {};
+  if (menu.likely_safe?.length) {
+    text += ` Menu highlights: ${menu.likely_safe.map((i) => i.item).join(", ")}.`;
   }
-
+  if (menu.ask_first?.length) {
+    text += ` Ask about: ${menu.ask_first.map((i) => i.item).join(", ")}.`;
+  }
+  if (menu.red_flags?.length) {
+    text += ` Avoid: ${menu.red_flags.map((i) => i.item).join(", ")}.`;
+  }
   return text;
 }
 
@@ -770,19 +581,11 @@ const shareResultsBtn = $("#share-results-btn");
 if (shareResultsBtn) {
   shareResultsBtn.addEventListener("click", () => {
     if (!currentScoutResult) return;
-    const text = generateShareText(currentScoutResult, false);
+    const text = generateShareText(currentScoutResult);
     shareReport(text, $("#share-results-feedback"));
   });
 }
 
-const shareFinalBtn = $("#share-final-btn");
-if (shareFinalBtn) {
-  shareFinalBtn.addEventListener("click", () => {
-    if (!currentScoutResult) return;
-    const text = generateShareText(currentScoutResult, true);
-    shareReport(text, $("#share-final-feedback"));
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Smart Alternatives
@@ -933,14 +736,13 @@ async function fetchAlternatives(cuisineType, location, originalName) {
 function resetToSearch() {
   if (restaurantNameInput) restaurantNameInput.value = "";
   if (menuUrlInput) menuUrlInput.value = "";
-  if (locationInput) locationInput.value = "";
+  if (locationInput) {
+    locationInput.value = localStorage.getItem("celia_last_location") || "";
+  }
   currentScoutResult = null;
   currentLocation = "";
   isCurrentRestaurantSaved = false;
   if (scoutResults) hide(scoutResults);
-  if (questionnaireView) hide(questionnaireView);
-  if (questionnaireLoading) hide(questionnaireLoading);
-  if (finalReportView) hide(finalReportView);
   if (scoutLoading) hide(scoutLoading);
   const altSection = $("#alternatives-section");
   if (altSection) hide(altSection);
@@ -951,9 +753,6 @@ function resetToSearch() {
 
 const newScoutBtn = $("#new-scout-btn");
 if (newScoutBtn) newScoutBtn.addEventListener("click", resetToSearch);
-
-const newScoutFinalBtn = $("#new-scout-final-btn");
-if (newScoutFinalBtn) newScoutFinalBtn.addEventListener("click", resetToSearch);
 
 // "See all menu items" button opens the full menu section
 const seeAllMenuBtn = $("#see-all-menu-btn");
@@ -1212,8 +1011,6 @@ if (shareReportBtn) {
 function showLimitReached() {
   hide(searchView);
   hide(scoutResults);
-  hide(questionnaireView);
-  hide(finalReportView);
   show(limitReachedView);
 }
 

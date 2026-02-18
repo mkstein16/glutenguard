@@ -238,50 +238,6 @@ OTHER RULES:
 Return ONLY valid JSON, no other text."""
 
 # ---------------------------------------------------------------------------
-# Post-Call Questionnaire Prompt
-# ---------------------------------------------------------------------------
-
-QUESTIONNAIRE_PROMPT = """You are a celiac disease restaurant safety expert. Based on the initial restaurant analysis and the results of a phone call to the restaurant, provide an updated safety assessment.
-
-Original restaurant analysis:
-{original_analysis}
-
-Phone call questionnaire results:
-{questionnaire_answers}
-
-Based on the phone call results, adjust the safety assessment. Staff knowledge and willingness to accommodate are strong signals — a restaurant that doesn't know what celiac is or seems dismissive is a major red flag regardless of menu options.
-
-Respond in this exact JSON format:
-{{
-  "adjusted_score": 6,
-  "adjusted_label": "Safe with communication",
-  "score_change": 1,
-  "score_reasoning": "Explanation of why the score went up, down, or stayed the same",
-  "recommendation": "GO",
-  "recommendation_detail": "2-3 sentence explanation of the recommendation, referencing specific call answers",
-  "safe_to_order": ["Specific item 1 that should be safe based on all information", "Specific item 2"],
-  "items_to_avoid": ["Specific item 1 to avoid", "Specific item 2 to avoid"],
-  "dining_tips": [
-    "Specific actionable tip for dining at this restaurant",
-    "Another tip based on what was learned from the call"
-  ],
-  "final_summary": "2-3 sentence final assessment incorporating both the research and call results"
-}}
-
-Rules:
-- adjusted_score is 0-10. Adjust based on call quality: confident knowledgeable staff = +1 to +3, dismissive or confused staff = -2 to -4
-- adjusted_label: "Go with confidence" (9-10), "Safe with communication" (7-8), "Proceed with caution" (5-6), "High risk" (3-4), "Avoid" (1-2)
-- recommendation must be one of: "GO", "NO-GO", "PROCEED WITH CAUTION"
-  - GO: score >= 7 and staff seemed knowledgeable
-  - NO-GO: score <= 3 or staff seemed dismissive/confused about celiac
-  - PROCEED WITH CAUTION: everything else
-- safe_to_order and items_to_avoid should reference specific menu items from the original analysis
-- dining_tips should be practical and specific to this restaurant
-
-Return ONLY valid JSON, no other text."""
-
-
-# ---------------------------------------------------------------------------
 # Alternatives Prompt
 # ---------------------------------------------------------------------------
 
@@ -838,38 +794,6 @@ def restaurant_scout_analyze():
 
     return jsonify(result)
 
-
-@app.route("/api/restaurant-scout/questionnaire", methods=["POST"])
-def restaurant_scout_questionnaire():
-    data = request.get_json()
-    if not data or not data.get("original_analysis") or not data.get("answers"):
-        return jsonify({"error": "Original analysis and answers are required"}), 400
-
-    answers_text = "\n".join(
-        f"- {q}: {a}" for q, a in data["answers"].items()
-    )
-
-    prompt = QUESTIONNAIRE_PROMPT.format(
-        original_analysis=json.dumps(data["original_analysis"], indent=2),
-        questionnaire_answers=answers_text,
-    )
-
-    try:
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        final_report = parse_claude_json(message.content[0].text)
-    except json.JSONDecodeError:
-        return jsonify({"error": "Failed to parse assessment. Please try again."}), 500
-    except Exception as e:
-        return jsonify({"error": f"Assessment failed: {str(e)}"}), 500
-
-    return jsonify({
-        "scout_id": data.get("scout_id"),
-        "final_report": final_report,
-    })
 
 
 @app.route("/api/restaurant-scout/save", methods=["POST"])

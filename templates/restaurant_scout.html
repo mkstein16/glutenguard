@@ -37,11 +37,9 @@
                     <label for="restaurant-name">Restaurant Name</label>
                     <input type="text" id="restaurant-name" placeholder="e.g. Olive Garden, Chipotle..." autocomplete="off">
 
-                    <label for="menu-url">Menu URL <span class="optional">(optional)</span></label>
-                    <input type="url" id="menu-url" placeholder="Paste a menu or website link..." autocomplete="off">
-
-                    <label for="scout-location">Location <span class="optional">(city or neighborhood)</span></label>
-                    <input type="text" id="scout-location" placeholder="e.g. Downtown Portland, Brooklyn NY..." autocomplete="off">
+                    <label for="scout-location">Location</label>
+                    <input type="text" id="scout-location" placeholder="City or neighborhood" autocomplete="off">
+                    <p class="input-helper">Helps find the right location — especially for common restaurant names</p>
 
                     <button id="scout-btn" class="btn btn-primary btn-full">Scout This Restaurant</button>
                     {% if searches_remaining > 0 %}
@@ -83,7 +81,7 @@
                         <p>Request received! We'll have your report ready within 24 hours.</p>
                     </div>
 
-                    <button id="limit-back-btn" class="btn btn-secondary btn-full" disabled>Scout Another Restaurant</button>
+                    <button id="limit-back-btn" class="btn btn-secondary btn-full" disabled>Search Another Restaurant</button>
                 </div>
             </div>
 
@@ -124,6 +122,7 @@
                         <div class="score-column">
                             <div id="safety-score-ring" class="score-ring"></div>
                             <div id="score-label" class="score-label"></div>
+                            <div id="score-context" class="score-context"></div>
                         </div>
                         <div class="hero-info">
                             <h2 id="scout-restaurant-name"></h2>
@@ -225,14 +224,15 @@
                     </details>
 
                     <!-- Call Script -->
-                    <details class="expand-section" id="call-script-section">
+                    <details class="expand-section" id="call-script-section" open>
                         <summary class="expand-header">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            Call Script
+                            <span id="call-script-heading">What to Ask</span>
                             <span class="expand-chevron">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
                         </summary>
+                        <p class="expand-subtitle">When calling ahead or talking to your server</p>
                         <div class="expand-content">
                             <p id="call-script-context" class="script-context"></p>
                             <div id="script-presets" class="script-presets">
@@ -326,86 +326,10 @@
                         </div>
                     </div>
 
-                    <button id="start-questionnaire-btn" class="btn btn-secondary btn-full">I Called — Answer Follow-up Questions</button>
-                    <button id="new-scout-btn" class="btn btn-secondary btn-full">Scout Another Restaurant</button>
+                    <button id="new-scout-btn" class="btn btn-secondary btn-full">Search Another Restaurant</button>
                 </div>
             </div>
 
-            <!-- Section 4: Questionnaire -->
-            <div id="questionnaire-view" class="hidden">
-                <div class="questionnaire-header">
-                    <h2>Post-Call Check</h2>
-                    <p class="questionnaire-intro">Answer based on your phone call with the restaurant:</p>
-                </div>
-                <div id="questionnaire-questions"></div>
-                <button id="submit-questionnaire-btn" class="btn btn-primary btn-full">Get Final Assessment</button>
-                <button id="back-to-results-btn" class="btn btn-secondary btn-full">Back to Results</button>
-            </div>
-
-            <!-- Section 5: Questionnaire Loading -->
-            <div id="questionnaire-loading" class="hidden">
-                <div class="loading-spinner"></div>
-                <p class="loading-text">Calculating final assessment...</p>
-                <p class="loading-hint">Adjusting safety score based on your call</p>
-            </div>
-
-            <!-- Section 6: Final Report -->
-            <div id="final-report-view" class="hidden">
-                <div id="final-score-card">
-                    <div id="final-score-ring" class="score-ring"></div>
-                    <div id="final-label" class="safety-label-badge"></div>
-                    <div id="score-change-indicator"></div>
-                    <div id="recommendation-badge"></div>
-                    <p id="recommendation-detail"></p>
-                </div>
-
-                <details class="detail-group neutral" open>
-                    <summary>
-                        <span class="detail-icon">i</span>
-                        Score Reasoning
-                    </summary>
-                    <p id="score-reasoning"></p>
-                </details>
-
-                <details class="detail-group safe" open>
-                    <summary>
-                        <span class="detail-icon">&#10003;</span>
-                        Safe to Order
-                        <span class="detail-count" id="safe-order-count"></span>
-                    </summary>
-                    <ul id="safe-to-order-list"></ul>
-                </details>
-
-                <details class="detail-group danger" open>
-                    <summary>
-                        <span class="detail-icon">!</span>
-                        Items to Avoid
-                        <span class="detail-count" id="avoid-count"></span>
-                    </summary>
-                    <ul id="items-to-avoid-list"></ul>
-                </details>
-
-                <details class="detail-group neutral">
-                    <summary>
-                        <span class="detail-icon">i</span>
-                        Dining Tips
-                        <span class="detail-count" id="tips-count"></span>
-                    </summary>
-                    <ul id="dining-tips-list"></ul>
-                </details>
-
-                <div id="final-summary-card">
-                    <p id="final-summary"></p>
-                </div>
-
-                <div class="share-container">
-                    <button id="share-final-btn" class="btn btn-secondary btn-full">Share Final Report</button>
-                    <span id="share-final-feedback" class="share-feedback hidden">Copied to clipboard!</span>
-                </div>
-
-                <button id="save-restaurant-btn" class="btn btn-primary btn-full">Save to My Safe Restaurants</button>
-                <button id="new-scout-final-btn" class="btn btn-secondary btn-full">Scout Another Restaurant</button>
-            </div>
         </main>
 
         <!-- Bottom Navigation -->
