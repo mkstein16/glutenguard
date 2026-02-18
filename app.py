@@ -28,6 +28,24 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
 
 client = Anthropic()
 
+
+# ---------------------------------------------------------------------------
+# Global JSON error handler for /api/ routes
+# ---------------------------------------------------------------------------
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Return JSON errors for API routes, default HTML for page routes."""
+    from werkzeug.exceptions import HTTPException
+    code = e.code if isinstance(e, HTTPException) else 500
+    if request.path.startswith("/api/"):
+        return jsonify({"error": str(e)}), code
+    # Let Flask handle non-API routes with its default HTML error pages
+    if isinstance(e, HTTPException):
+        return e
+    return "Internal server error", 500
+
+
 # ---------------------------------------------------------------------------
 # Label Scanner Prompt
 # ---------------------------------------------------------------------------
