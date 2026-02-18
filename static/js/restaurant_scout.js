@@ -151,7 +151,7 @@ function displayScoutResults(data) {
   scoreLabel.className = "score-label " + getScoreLabelColor(a.safety_score);
 
   const label = $("#safety-label");
-  label.textContent = a.safety_label;
+  label.textContent = a.score_label || "";
   label.className = "safety-label-badge " + getScoreClass(a.safety_score);
 
   $("#scout-restaurant-name").textContent = titleCase(a.restaurant_name);
@@ -162,6 +162,19 @@ function displayScoutResults(data) {
   const specPositives = a.this_restaurant ? a.this_restaurant.specific_positives || [] : [];
   const safetyIndicators = $("#safety-indicators");
   const safetyList = $("#safety-indicators-list");
+
+  // Dynamic heading based on safety score
+  const safetyHeading = $("#safety-indicators-heading");
+  if (safetyHeading) {
+    const score = a.safety_score || 0;
+    if (score >= 7) {
+      safetyHeading.textContent = "Why It's Safe";
+    } else if (score >= 5) {
+      safetyHeading.textContent = "What's in Its Favor";
+    } else {
+      safetyHeading.textContent = "Claimed Positives";
+    }
+  }
 
   if (specPositives.length > 0) {
     safetyList.innerHTML = "";
@@ -708,7 +721,7 @@ function generateShareText(data, isFinalReport) {
       text += ` Avoid: ${r.items_to_avoid.join(", ")}.`;
     }
   } else {
-    text += ` - Safety Score: ${a.safety_score}/10 ${a.safety_label}.`;
+    text += ` - Safety Score: ${a.safety_score}/10 ${a.score_label}.`;
     text += ` ${a.summary}`;
     const menu = a.menu_analysis || {};
     if (menu.likely_safe?.length) {
@@ -1127,7 +1140,7 @@ if (shareReportBtn) {
     const searchName = currentScoutResult.restaurant_name || analysis.restaurant_name;
     const displayName = titleCase(analysis.restaurant_name);
     const safetyScore = analysis.safety_score;
-    const safetyLabel = analysis.safety_label;
+    const safetyLabel = analysis.score_label;
 
     // Build shareable URL using original search term (matches cache key)
     const shareUrl = new URL("/restaurant-scout", window.location.origin);

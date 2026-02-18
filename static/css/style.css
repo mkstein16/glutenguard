@@ -290,6 +290,16 @@ main {
     margin-top: var(--space-xl);
 }
 
+.search-counter {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.5rem;
+}
+.search-counter a {
+    color: #6366f1;
+}
+
 .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;

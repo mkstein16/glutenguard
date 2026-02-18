@@ -141,7 +141,6 @@ Respond with ONLY valid JSON in this exact format:
   "restaurant_name": "Exact official name of the restaurant",
   "cuisine_type": "Type of cuisine",
   "safety_score": 5,
-  "safety_label": "Proceed with caution",
   "score_label": "Proceed with caution",
   "summary": "2-3 sentence overview based on YOUR ACTUAL RESEARCH FINDINGS",
 
@@ -223,14 +222,14 @@ CRITICAL SCORING INSTRUCTIONS:
 - Score based on what you find about THIS SPECIFIC restaurant. Do not penalize a restaurant for generic cuisine risks if they have addressed them. A Thai restaurant using tamari with a dedicated GF kitchen is a 9-10, not a 7 because "Thai food often has soy sauce."
 - A dedicated GF kitchen overrides ALL generic cuisine concerns.
 - If you found no real information about this restaurant, cap the score at 4 and note the lack of data.
-- The safety_label and score_label MUST match the score range exactly.
+- The score_label MUST match the score range exactly.
 
 LABEL MAPPING:
-- safety_score 9-10 → safety_label: "VERY LOW RISK", score_label: "Go with confidence"
-- safety_score 7-8 → safety_label: "LOW RISK", score_label: "Safe with communication"
-- safety_score 5-6 → safety_label: "MODERATE RISK", score_label: "Proceed with caution"
-- safety_score 3-4 → safety_label: "HIGH RISK", score_label: "High risk"
-- safety_score 1-2 → safety_label: "VERY HIGH RISK", score_label: "Avoid"
+- safety_score 9-10 → score_label: "Go with confidence"
+- safety_score 7-8 → score_label: "Safe with communication"
+- safety_score 5-6 → score_label: "Proceed with caution"
+- safety_score 3-4 → score_label: "High risk"
+- safety_score 1-2 → score_label: "Avoid"
 
 OTHER RULES:
 - call_script: 5-8 questions. Mark 3-5 as "essential" and the rest as "additional". At least 2 essential questions should target specific findings from your research.
@@ -255,7 +254,7 @@ Based on the phone call results, adjust the safety assessment. Staff knowledge a
 Respond in this exact JSON format:
 {{
   "adjusted_score": 6,
-  "adjusted_label": "LOW RISK",
+  "adjusted_label": "Safe with communication",
   "score_change": 1,
   "score_reasoning": "Explanation of why the score went up, down, or stayed the same",
   "recommendation": "GO",
@@ -271,7 +270,7 @@ Respond in this exact JSON format:
 
 Rules:
 - adjusted_score is 0-10. Adjust based on call quality: confident knowledgeable staff = +1 to +3, dismissive or confused staff = -2 to -4
-- adjusted_label: "VERY LOW RISK" (8-10), "LOW RISK" (6-7), "MODERATE RISK" (4-5), "HIGH RISK" (0-3)
+- adjusted_label: "Go with confidence" (9-10), "Safe with communication" (7-8), "Proceed with caution" (5-6), "High risk" (3-4), "Avoid" (1-2)
 - recommendation must be one of: "GO", "NO-GO", "PROCEED WITH CAUTION"
   - GO: score >= 7 and staff seemed knowledgeable
   - NO-GO: score <= 3 or staff seemed dismissive/confused about celiac
@@ -305,7 +304,7 @@ Based on your research, return ONLY valid JSON:
       "name": "Real restaurant name found in search results",
       "cuisine": "Type of cuisine",
       "estimated_safety_score": 8,
-      "safety_label": "VERY LOW RISK",
+      "score_label": "Safe with communication",
       "brief_reason": "Why this is a good celiac-safe option based on what you found",
       "location_note": "Neighborhood or address detail if found"
     }}
@@ -318,7 +317,7 @@ Based on your research, return ONLY valid JSON:
 - Exclude "{original_restaurant_name}" from results.
 - Return 1-3 alternatives. If you found none, return an empty alternatives array.
 - estimated_safety_score: use same 0-10 scale. Base it on what reviews/listings say.
-- safety_label: "VERY LOW RISK" (8-10), "LOW RISK" (6-7), "MODERATE RISK" (4-5), "HIGH RISK" (0-3)
+- score_label: "Go with confidence" (9-10), "Safe with communication" (7-8), "Proceed with caution" (5-6), "High risk" (3-4), "Avoid" (1-2)
 
 Return ONLY valid JSON, no other text."""
 
@@ -358,6 +357,18 @@ def get_client_ip():
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.remote_addr
+
+
+def get_searches_remaining():
+    """Get the number of free searches remaining for the current user/IP."""
+    if "user_id" in session:
+        user = get_user_by_id(session["user_id"])
+        if user:
+            count = get_search_count(user["email"])
+            return max(0, FREE_SEARCH_LIMIT - count)
+    ip = get_client_ip()
+    count = get_anonymous_search_count(ip)
+    return max(0, FREE_SEARCH_LIMIT - count)
 
 
 def allowed_file(filename):
@@ -435,7 +446,8 @@ def hub():
     if "user_id" in session:
         user = get_user_by_id(session["user_id"])
     restaurant_count = get_restaurant_count()
-    return render_template("hub.html", user=user, restaurant_count=restaurant_count)
+    searches_remaining = get_searches_remaining()
+    return render_template("hub.html", user=user, restaurant_count=restaurant_count, searches_remaining=searches_remaining)
 
 
 @app.route("/scan")
@@ -448,7 +460,8 @@ def restaurant_scout_page():
     user = None
     if "user_id" in session:
         user = get_user_by_id(session["user_id"])
-    return render_template("restaurant_scout.html", user=user)
+    searches_remaining = get_searches_remaining()
+    return render_template("restaurant_scout.html", user=user, searches_remaining=searches_remaining)
 
 
 @app.route("/discover")

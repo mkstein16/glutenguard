@@ -485,6 +485,11 @@
                 <input type="text" id="hero-name" placeholder="Search a restaurant..." required>
                 <input type="text" id="hero-location" placeholder="City or neighborhood (optional)">
                 <button type="submit" class="btn btn-primary btn-full">Scout This Restaurant</button>
+                {% if searches_remaining > 0 %}
+                <p class="search-counter">{{ searches_remaining }} of 5 free searches remaining</p>
+                {% else %}
+                <p class="search-counter">No free searches remaining · <a href="/restaurant-scout#waitlist">Join the waitlist</a></p>
+                {% endif %}
             </form>
 
             <!-- Social Proof -->

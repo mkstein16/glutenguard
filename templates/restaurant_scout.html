@@ -44,6 +44,11 @@
                     <input type="text" id="scout-location" placeholder="e.g. Downtown Portland, Brooklyn NY..." autocomplete="off">
 
                     <button id="scout-btn" class="btn btn-primary btn-full">Scout This Restaurant</button>
+                    {% if searches_remaining > 0 %}
+                    <p class="search-counter">{{ searches_remaining }} of 5 free searches remaining</p>
+                    {% else %}
+                    <p class="search-counter">No free searches remaining · <a href="#waitlist">Join the waitlist</a></p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -172,9 +177,9 @@
 
                 <!-- 2. WHY IT'S SAFE Section -->
                 <div id="safety-indicators" class="result-section safety-section hidden">
-                    <h3 class="section-title">
+                    <h3 id="safety-indicators-title" class="section-title">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        Why It's Safe
+                        <span id="safety-indicators-heading">Why It's Safe</span>
                     </h3>
                     <ul id="safety-indicators-list" class="indicator-list"></ul>
                 </div>
