@@ -1135,8 +1135,63 @@ from database import (
     get_anonymous_search_count, increment_anonymous_search_count,
     add_to_waitlist, add_restaurant_request, get_pending_requests,
     get_restaurant_count,
+    get_admin_stats, get_recent_restaurants, get_waitlist_entries,
+    get_restaurant_request_entries, get_most_saved_restaurants,
 )
 init_tables()
+
+
+# ---------------------------------------------------------------------------
+# Admin Dashboard
+# ---------------------------------------------------------------------------
+
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+
+
+@app.route("/admin", methods=["GET", "POST"])
+def admin_login():
+    if session.get("admin_authenticated"):
+        return redirect(url_for("admin_dashboard"))
+
+    error = None
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if not ADMIN_PASSWORD:
+            error = "Admin access is not configured."
+        elif password == ADMIN_PASSWORD:
+            session["admin_authenticated"] = True
+            return redirect(url_for("admin_dashboard"))
+        else:
+            error = "Incorrect password."
+
+    return render_template("admin_login.html", error=error)
+
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    if not session.get("admin_authenticated"):
+        return redirect(url_for("admin_login"))
+
+    stats = get_admin_stats()
+    recent = get_recent_restaurants(20)
+    waitlist = get_waitlist_entries()
+    requests = get_restaurant_request_entries()
+    most_saved = get_most_saved_restaurants(10)
+
+    return render_template(
+        "admin_dashboard.html",
+        stats=stats,
+        recent=recent,
+        waitlist=waitlist,
+        requests=requests,
+        most_saved=most_saved,
+    )
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("admin_authenticated", None)
+    return redirect(url_for("admin_login"))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))

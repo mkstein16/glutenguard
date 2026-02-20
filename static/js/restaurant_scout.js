@@ -29,12 +29,18 @@ const limitReachedView = $("#limit-reached-view");
 function startLoadingSteps() {
   const steps = document.querySelectorAll(".loading-step");
   const header = document.querySelector(".loading-header");
+  const counter = $("#loading-step-counter");
   currentStep = 0;
+
+  function updateCounter(step) {
+    if (counter) counter.textContent = `Step ${step + 1} of ${steps.length}`;
+  }
 
   // 500ms delay — cache hits resolve before this fires
   loadingTimer = setTimeout(() => {
     header.classList.add("visible");
     steps[0].classList.add("active");
+    updateCounter(0);
 
     stepInterval = setInterval(() => {
       currentStep++;
@@ -42,6 +48,7 @@ function startLoadingSteps() {
         steps[currentStep - 1].classList.remove("active");
         steps[currentStep - 1].classList.add("done");
         steps[currentStep].classList.add("active");
+        updateCounter(currentStep);
       } else {
         clearInterval(stepInterval);
         stepInterval = null;
@@ -61,6 +68,8 @@ function stopLoadingSteps() {
   }
   // Reset for next search
   document.querySelector(".loading-header").classList.remove("visible");
+  const counter = $("#loading-step-counter");
+  if (counter) counter.textContent = "";
   document.querySelectorAll(".loading-step").forEach((step) => {
     step.classList.remove("active", "done");
   });

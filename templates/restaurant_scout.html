@@ -87,29 +87,33 @@
 
             <!-- Section 2: Loading -->
             <div id="scout-loading" class="hidden">
-                <div class="loading-header">
-                    <p class="loading-header-text">This restaurant hasn't been searched yet — researching it now. Next time it'll be instant.</p>
-                </div>
-                <div class="loading-steps">
-                    <div class="loading-step" data-step="0">
-                        <span class="step-indicator"></span>
-                        <span class="step-text">Searching for restaurant website...</span>
+                <div class="loading-center">
+                    <div class="loading-header">
+                        <p class="loading-header-text">This restaurant hasn't been searched yet — researching it now. Next time it'll be instant.</p>
+                        <p class="loading-time-hint">This usually takes about 30 seconds</p>
                     </div>
-                    <div class="loading-step" data-step="1">
-                        <span class="step-indicator"></span>
-                        <span class="step-text">Checking gluten-free reviews...</span>
-                    </div>
-                    <div class="loading-step" data-step="2">
-                        <span class="step-indicator"></span>
-                        <span class="step-text">Searching celiac community reviews...</span>
-                    </div>
-                    <div class="loading-step" data-step="3">
-                        <span class="step-indicator"></span>
-                        <span class="step-text">Analyzing menu and safety...</span>
-                    </div>
-                    <div class="loading-step" data-step="4">
-                        <span class="step-indicator"></span>
-                        <span class="step-text">Building your safety report...</span>
+                    <p id="loading-step-counter" class="loading-step-counter"></p>
+                    <div class="loading-steps">
+                        <div class="loading-step" data-step="0">
+                            <span class="step-indicator"></span>
+                            <span class="step-text">Finding their menu and website...</span>
+                        </div>
+                        <div class="loading-step" data-step="1">
+                            <span class="step-indicator"></span>
+                            <span class="step-text">Reading gluten-free reviews...</span>
+                        </div>
+                        <div class="loading-step" data-step="2">
+                            <span class="step-indicator"></span>
+                            <span class="step-text">Checking what other celiacs said...</span>
+                        </div>
+                        <div class="loading-step" data-step="3">
+                            <span class="step-indicator"></span>
+                            <span class="step-text">Analyzing the menu for safe options...</span>
+                        </div>
+                        <div class="loading-step" data-step="4">
+                            <span class="step-indicator"></span>
+                            <span class="step-text">Putting together your report...</span>
+                        </div>
                     </div>
                 </div>
             </div>

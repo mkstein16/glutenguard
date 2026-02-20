@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Celia Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #111;
+            line-height: 1.5;
+        }
+        .header {
+            background: #111;
+            color: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header a { color: #9ca3af; font-size: 14px; text-decoration: none; }
+        .header a:hover { color: #fff; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+        /* Stat cards */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .stat-card .label { font-size: 13px; color: #666; margin-bottom: 4px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #111; }
+        .stat-card .detail { font-size: 12px; color: #999; margin-top: 2px; }
+
+        /* Sections */
+        .section { margin-bottom: 32px; }
+        .section h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #333; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            padding: 10px 14px;
+            background: #f9fafb;
+            font-weight: 600;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #333;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: #fafafa; }
+        .empty { color: #999; font-style: italic; padding: 20px; text-align: center; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+
+        /* Score badges */
+        .score { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; font-size: 12px; font-weight: 700; color: #fff; }
+        .score-high { background: #10b981; }
+        .score-mid { background: #f59e0b; }
+        .score-low { background: #ef4444; }
+
+        /* Status badges */
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-fulfilled { background: #d1fae5; color: #065f46; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 13px; }
+            th, td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Celia Admin</h1>
+        <a href="/admin/logout">Logout</a>
+    </div>
+
+    <div class="container">
+        <!-- Overview Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="label">Total Users</div>
+                <div class="value">{{ stats.get('total_users', 0) }}</div>
+                <div class="detail">{{ stats.get('registered_users', 0) }} registered, {{ stats.get('anonymous_users', 0) }} anonymous</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Total Searches</div>
+                <div class="value">{{ stats.get('total_searches', 0) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Cached Restaurants</div>
+                <div class="value">{{ stats.get('cached_restaurants', 0) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Waitlist Signups</div>
+                <div class="value">{{ stats.get('waitlist_count', 0) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Restaurant Requests</div>
+                <div class="value">{{ stats.get('request_count', 0) }}</div>
+            </div>
+        </div>
+
+        <!-- Recent Restaurants -->
+        <div class="section">
+            <h2>Recent Restaurants (Last 20)</h2>
+            {% if recent %}
+            <table>
+                <thead>
+                    <tr><th>Restaurant</th><th>Location</th><th>Score</th><th>Cached</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in recent %}
+                    <tr>
+                        <td>{{ r.name|title }}</td>
+                        <td>{{ r.location|title }}</td>
+                        <td>
+                            {% if r.safety_score is not none %}
+                            <span class="score {% if r.safety_score >= 7 %}score-high{% elif r.safety_score >= 5 %}score-mid{% else %}score-low{% endif %}">{{ r.safety_score }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>{{ r.searched_at.strftime('%b %d, %Y %I:%M %p') if r.searched_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No restaurants cached yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- Most Saved -->
+        <div class="section">
+            <h2>Most Saved Restaurants</h2>
+            {% if most_saved %}
+            <table>
+                <thead>
+                    <tr><th>Restaurant</th><th>Location</th><th>Score</th><th>Saves</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in most_saved %}
+                    <tr>
+                        <td>{{ r.name|title }}</td>
+                        <td>{{ r.location|title }}</td>
+                        <td>
+                            {% if r.safety_score is not none %}
+                            <span class="score {% if r.safety_score >= 7 %}score-high{% elif r.safety_score >= 5 %}score-mid{% else %}score-low{% endif %}">{{ r.safety_score }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>{{ r.save_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No saved restaurants yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- Waitlist -->
+        <div class="section">
+            <h2>Waitlist</h2>
+            {% if waitlist %}
+            <table>
+                <thead>
+                    <tr><th>Email</th><th>Signed Up</th></tr>
+                </thead>
+                <tbody>
+                    {% for w in waitlist %}
+                    <tr>
+                        <td>{{ w.email }}</td>
+                        <td>{{ w.signed_up_at.strftime('%b %d, %Y %I:%M %p') if w.signed_up_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No waitlist signups yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- Restaurant Requests -->
+        <div class="section">
+            <h2>Restaurant Requests</h2>
+            {% if requests %}
+            <table>
+                <thead>
+                    <tr><th>Restaurant</th><th>Location</th><th>Email</th><th>Status</th><th>Requested</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in requests %}
+                    <tr>
+                        <td>{{ r.restaurant_name }}</td>
+                        <td>{{ r.location or '—' }}</td>
+                        <td>{{ r.user_email or '—' }}</td>
+                        <td>
+                            {% if r.fulfilled_at %}
+                            <span class="badge badge-fulfilled">Fulfilled</span>
+                            {% else %}
+                            <span class="badge badge-pending">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ r.requested_at.strftime('%b %d, %Y %I:%M %p') if r.requested_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No restaurant requests yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

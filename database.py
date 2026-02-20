@@ -542,6 +542,134 @@ def add_to_waitlist(email):
         conn.close()
 
 
+def get_admin_stats():
+    """Get overview stats for the admin dashboard."""
+    conn = get_connection()
+    if conn is None:
+        return {}
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS cnt FROM users")
+            registered_users = cur.fetchone()["cnt"]
+
+            cur.execute("SELECT COUNT(*) AS cnt FROM anonymous_usage")
+            anon_users = cur.fetchone()["cnt"]
+
+            cur.execute("SELECT COALESCE(SUM(search_count), 0) AS total FROM users")
+            registered_searches = cur.fetchone()["total"]
+
+            cur.execute("SELECT COALESCE(SUM(search_count), 0) AS total FROM anonymous_usage")
+            anon_searches = cur.fetchone()["total"]
+
+            cur.execute("SELECT COUNT(*) AS cnt FROM restaurants")
+            cached = cur.fetchone()["cnt"]
+
+            cur.execute("SELECT COUNT(*) AS cnt FROM waitlist")
+            waitlist = cur.fetchone()["cnt"]
+
+            cur.execute("SELECT COUNT(*) AS cnt FROM restaurant_requests")
+            requests = cur.fetchone()["cnt"]
+
+        return {
+            "total_users": registered_users + anon_users,
+            "registered_users": registered_users,
+            "anonymous_users": anon_users,
+            "total_searches": registered_searches + anon_searches,
+            "cached_restaurants": cached,
+            "waitlist_count": waitlist,
+            "request_count": requests,
+        }
+    except Exception as e:
+        print(f"[DB] Error getting admin stats: {e}")
+        return {}
+    finally:
+        conn.close()
+
+
+def get_recent_restaurants(limit=20):
+    """Get the most recently cached restaurants."""
+    conn = get_connection()
+    if conn is None:
+        return []
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT name, location, safety_score, searched_at FROM restaurants ORDER BY searched_at DESC LIMIT %s",
+                (limit,),
+            )
+            return [dict(row) for row in cur.fetchall()]
+    except Exception as e:
+        print(f"[DB] Error getting recent restaurants: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def get_waitlist_entries():
+    """Get all waitlist entries."""
+    conn = get_connection()
+    if conn is None:
+        return []
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT email, signed_up_at FROM waitlist ORDER BY signed_up_at DESC")
+            return [dict(row) for row in cur.fetchall()]
+    except Exception as e:
+        print(f"[DB] Error getting waitlist entries: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def get_restaurant_request_entries():
+    """Get all restaurant request entries."""
+    conn = get_connection()
+    if conn is None:
+        return []
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT restaurant_name, location, user_email, requested_at, fulfilled_at FROM restaurant_requests ORDER BY requested_at DESC"
+            )
+            return [dict(row) for row in cur.fetchall()]
+    except Exception as e:
+        print(f"[DB] Error getting restaurant requests: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def get_most_saved_restaurants(limit=10):
+    """Get the most saved restaurants by users."""
+    conn = get_connection()
+    if conn is None:
+        return []
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT r.name, r.location, r.safety_score, COUNT(*) as save_count
+                FROM saved_restaurants sr
+                JOIN restaurants r ON sr.restaurant_id = r.id
+                GROUP BY r.id, r.name, r.location, r.safety_score
+                ORDER BY save_count DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+            return [dict(row) for row in cur.fetchall()]
+    except Exception as e:
+        print(f"[DB] Error getting most saved restaurants: {e}")
+        return []
+    finally:
+        conn.close()
+
+
 def get_user_saved_restaurants(user_id):
     """Get all saved restaurants for a user. Returns list of restaurant dicts."""
     conn = get_connection()
